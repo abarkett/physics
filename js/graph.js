@@ -30,6 +30,7 @@
       this.pinned = !!opts.pinned;
       this.born = performance.now();               // for spawn animation
       this.state = opts.state != null ? opts.state : 0; // for entanglement demo
+      this.cls = opts.cls != null ? opts.cls : null;    // equivalence class (Light: R13)
       this.tag = opts.tag || null;                 // 'horizon', 'singularity'...
     }
   }

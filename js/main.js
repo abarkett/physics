@@ -79,9 +79,10 @@
       const s = IF.STAGES[i];
       this.renderer.mode = s.mode;
       this.renderer.extra = {};            // reset per-stage rendering params
-      this._syncShared();
+      this.renderer.observers = [];        // clear stale slices / fanout
+      this.renderer.field = null;
+      this._fieldCore = null;
       s.build(this);
-      this._syncShared();
 
       this.el.chapter.textContent = 'Chapter ' + s.chapter;
       this.el.kicker.textContent = s.kicker;
@@ -96,18 +97,16 @@
       this._setHint(s);
     },
 
-    // Push App-level shared knobs into renderer.extra where stages expect them.
-    _syncShared() {
-      if (this.renderer.extra.G == null && (this.renderer.mode === 'gravity' || this.renderer.mode === 'blackhole'))
-        this.renderer.extra.G = this._G;
-    },
+    // (no shared force knobs anymore — the fanout is the only process)
+    _syncShared() {},
 
     _setHint(s) {
       const map = {
         drag: 'Tip: drag any node — the layout re-derives geometry from adjacency.',
         'closure-n': 'Tip: use ＋ / － to add or remove states in the loop.',
-        measure: 'Tip: click an entangled node (ψ) to measure it.',
-        gravity: 'Tip: drag the G slider to change the informational coupling.'
+        measure: 'Tip: drag a ψ node — the bridge stays a 1-hop throat. Click ψ to measure.',
+        'field-reset': 'Tip: press Reset to release the fanout again from scratch.',
+        leak: 'Tip: lower the leak to tighten the horizon and trap the fanout.'
       };
       this.el.hint.textContent = this.sandbox
         ? 'Sandbox: click empty space to add a state · click two nodes to link them · drag to move.'
@@ -134,18 +133,23 @@
         this._addLabel(c, 'n = ' + this._closureN, 'nLabel');
         this._addButton(c, '＋', () => { this._closureN = Math.min(64, this._closureN + 1); refresh(); });
       }
-      if (s.interactive === 'gravity') {
+      if (s.interactive === 'field-reset') {
+        this._addButton(c, '↺ Reset fanout', () => s.build(this));
+      }
+      if (s.interactive === 'leak') {
         const wrap = document.createElement('div'); wrap.className = 'slider';
-        const lab = document.createElement('span'); lab.textContent = 'G';
+        const lab = document.createElement('span'); lab.textContent = 'leak';
         const inp = document.createElement('input');
-        inp.type = 'range'; inp.min = '10'; inp.max = '260'; inp.value = String(this._G);
-        const val = document.createElement('span'); val.textContent = this._G; val.className = 'sval';
+        inp.type = 'range'; inp.min = '0'; inp.max = '100'; inp.value = String(Math.round((this._leak != null ? this._leak : 0.05) * 100));
+        const val = document.createElement('span'); val.className = 'sval';
+        const show = () => { val.textContent = (this._leak != null ? this._leak : 0.05).toFixed(2); };
+        show();
         inp.addEventListener('input', () => {
-          this._G = +inp.value; val.textContent = this._G;
-          this.renderer.extra.G = (this.renderer.mode === 'blackhole') ? Math.max(this._G, 120) : this._G;
+          this._leak = +inp.value / 100; show();
+          if (this.renderer.field) this.renderer.fieldParams.leak = this._leak;
         });
         wrap.append(lab, inp, val); c.appendChild(wrap);
-        this._addButton(c, 'Re-seed', () => this.renderer.seedParticles(this.renderer.mode === 'blackhole' ? 200 : 160, 720));
+        this._addButton(c, '↺ Reset', () => s.build(this));
       }
     },
 
@@ -239,6 +243,7 @@
       this.el.sandboxBtn.textContent = want ? '✦ Exit Sandbox' : '✦ Sandbox';
       if (want) {
         this.renderer.mode = 'graph'; this.renderer.flow = true; this.renderer.extra = {};
+        this.renderer.observers = []; this.renderer.field = null;
         this.graph.clear();
         this.el.chapter.textContent = 'Free Play';
         this.el.kicker.textContent = 'Build an Informational Universe';
@@ -303,26 +308,59 @@
           }
           case 'cross-section': {
             const fr = r.extra.flatRadius || 0;
-            add('Cross-section radius', fr.toFixed(2), fr > 0 ? 'the "now" the flatlander sees' : 'object not yet intersecting');
+            add('Slice length', fr.toFixed(2), fr > 0 ? 'point → line → point' : 'not yet intersecting');
             add('Underlying object', 'STATIC', 'nothing actually evolves');
             break;
           }
+          case 'projected': {
+            if (this._entPair) {
+              const a = g.get(this._entPair[0]), b = g.get(this._entPair[1]);
+              const d = Math.hypot(a.x - b.x, a.y - b.y);
+              add('Projected separation', d.toFixed(0), 'grows as you drag them apart');
+            }
+            break;
+          }
+          case 'structural': add('Structural distance', '1 hop', 'adjacent — never changes'); break;
           case 'hidden-links': {
             const h = g.edges.filter(e => e.tag === 'entangled').length;
-            add('Hidden adjacencies', h, 'across the projection');
+            add('Hidden adjacencies', h, 'bridges through higher D');
             if (this._entPair) {
               const a = g.get(this._entPair[0]).state, b = g.get(this._entPair[1]).state;
               add('ψ₁ , ψ₂', a + ' , ' + b, a !== b ? 'anti-correlated' : 'correlated');
             }
             break;
           }
-          case 'density': add('Peak density', g.densityAt(0, 0, 200).toFixed(1), 'informational mass'); break;
-          case 'G': add('Coupling G', (r.extra.G || this._G).toFixed(0), 'density ↔ projection bias'); break;
-          case 'captured': {
-            const cap = r.particles.filter(p => p.captured).length;
-            add('Captured paths', cap + ' / ' + r.particles.length, r.extra.horizon ? 'beyond the horizon' : 'bound to the well');
+          case 'clock': {
+            const o = r.observers[0];
+            add('Observer clock', o ? o.clock : 0, 'ordered differences = time');
             break;
           }
+          case 'steps': { const o = r.observers[0]; add('Steps taken', o ? o.steps : 0, 'fanout samples'); break; }
+          case 'clock-matter': { const o = r.observers[0]; add('Matter clock', o ? o.clock : 0, 'distinct states ⇒ time ticks'); break; }
+          case 'clock-light': { const o = r.observers[1]; add('Light clock', o ? o.clock : 0, 'no new distinction ⇒ frozen'); break; }
+          case 'amp-core': {
+            const f = r.field, set = this._fieldCore;
+            add('Amplitude in X', f && set ? (f.massIn(set) * 100).toFixed(0) + '%' : '—', 'fanout dwelling in the dense region');
+            break;
+          }
+          case 'delivered': { const f = r.field; add('Delivered to C', f ? f.delivered.toFixed(2) : '0', 'trickle through the mass'); break; }
+          case 'occ-core': {
+            const f = r.field, set = this._fieldCore;
+            add('Occupancy at mass', f && set ? (f.massIn(set) * 100).toFixed(0) + '%' : '—', 'where the fanout pools');
+            break;
+          }
+          case 'deg-core': {
+            const f = r.field, set = this._fieldCore;
+            add('Path share of mass', f && set ? (f.degreeShare(set) * 100).toFixed(0) + '%' : '—', '∝ degree — the target it converges to');
+            break;
+          }
+          case 'escape': {
+            const f = r.field;
+            const v = f ? f.escape : 0;
+            add('Escape flux', v < 1e-4 ? '≈ 0' : v.toFixed(4), v < 1e-4 ? 'trapped — horizon closed' : 'amplitude leaving the core');
+            break;
+          }
+          case 'leak': add('Horizon leak', (this._leak != null ? this._leak : 0.05).toFixed(2), 'outward continuations'); break;
         }
       }
       this._renderMetrics(rows);

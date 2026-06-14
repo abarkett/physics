@@ -23,13 +23,14 @@
     return ids;
   }
 
-  function cluster(app, cx, cy, n, group, link) {
+  function cluster(app, cx, cy, n, group, link, spread) {
     const g = app.graph;
     const ids = [];
+    const sp = spread != null ? spread : 80;
     for (let i = 0; i < n; i++) {
       ids.push(g.addNode({
-        x: cx + (Math.random() - 0.5) * 80,
-        y: cy + (Math.random() - 0.5) * 80,
+        x: cx + (Math.random() - 0.5) * sp,
+        y: cy + (Math.random() - 0.5) * sp,
         group: group || 0
       }).id);
     }
@@ -98,26 +99,29 @@
         app.renderer.setCamera(0, 0, 1.3);
       }
     },
-    /* 4 -- time ----------------------------------------------------------- */
+    /* 4 -- time (fanout vs. the observer's linear slice) ------------------- */
     {
-      chapter: '4', title: 'Information Creates Time', kicker: 'Ordered Difference',
-      body: `Every measurement of time requires change; every change requires distinguishable states. ` +
-            `So <b>Information → Change → Time</b>, never the reverse. Watch the pulses: each is the traversal of an ` +
-            `ordered difference. <em>Time is the observer's reading of that ordering</em> — not a fundamental backdrop.`,
-      mode: 'graph',
-      metrics: ['states', 'edges', 'bits'],
+      chapter: '4', title: 'Information Creates Time', kicker: 'Fanout vs. the Observer Slice',
+      body: `Underneath, the process is a <em>simultaneous fanout</em> — amplitude spreads along <b>every</b> adjacency at ` +
+            `once (the soft pulses). That fanout is static and timeless. The bright dot is one <em>observer slice</em>: a single ` +
+            `linear path sampled out of the fanout. <b>Time is not the fanout</b> — it is the observer's running count of ordered ` +
+            `differences along its slice (the <b>clock</b>). No new distinction ⇒ no tick.`,
+      mode: 'fanout',
+      metrics: ['states', 'clock', 'steps'],
       build(app) {
         const g = app.graph; g.clear(); app.renderer.flow = true;
         let prev = null, first = null;
-        const N = 7;
+        const N = 10;
         for (let i = 0; i < N; i++) {
           const a = (i / N) * Math.PI * 2 - Math.PI / 2;
-          const n = g.addNode({ x: Math.cos(a) * 140, y: Math.sin(a) * 140, group: i % 6, label: String.fromCharCode(65 + i) });
+          const n = g.addNode({ x: Math.cos(a) * 150, y: Math.sin(a) * 150, group: i % 6, label: String.fromCharCode(65 + i) });
           if (first === null) first = n.id;
           if (prev !== null) g.addEdge(prev, n.id, 1);
           prev = n.id;
         }
         g.addEdge(prev, first, 1);
+        app.renderer.initField([first], { lazy: 0.55 });
+        app.renderer.seedObservers(1, first);
         app.renderer.setCamera(0, 0, 1.1);
       }
     },
@@ -171,9 +175,10 @@
     /* 8 -- flatland / wavefunction --------------------------------------- */
     {
       chapter: '4 · 10', title: 'Projection & the Wavefunction', kicker: 'Flatland',
-      body: `A sphere drifts through a plane. From outside, nothing evolves — the object is static. ` +
-            `But the flatlander, who only ever sees the cross-section, swears something was <em>born, grew, and died in time.</em> ` +
-            `The wavefunction is likewise a static higher-dimensional structure; what changes is only the observer's slice of access. ` +
+      body: `We view Flatland — a 2D plane — <em>edge-on</em>, so it appears as the line. A static sphere drifts through it. ` +
+            `The flatlander, trapped in the line, never sees a sphere or even a circle: he experiences only the slice — ` +
+            `<em>a point that swells into a line and shrinks back to a point</em> (the filmstrip below). He records that sequence as <em>time</em>, ` +
+            `yet nothing evolved. The wavefunction is likewise a static higher-dimensional structure; what moves is only the observer's slice. ` +
             `Collapse is a change of <em>perspective</em>, not of reality.`,
       mode: 'flatland',
       metrics: ['cross-section'],
@@ -182,12 +187,12 @@
     /* 9 -- entanglement --------------------------------------------------- */
     {
       chapter: '12', title: 'Entanglement', kicker: 'Hidden Adjacency',
-      body: `Two states sit far apart in the spatial projection, yet a dashed link shows they remain <em>adjacent</em> ` +
-            `in the underlying structure. <b>Click either one</b> to "measure" it: its partner correlates instantly — ` +
-            `nothing travelled across space, because in the territory they were never apart. ` +
-            `Entanglement reveals adjacency the projection hides.`,
+      body: `The two ψ states look far apart — the faint dashed line is their large <em>projected</em> separation. But the ` +
+            `bright tube is a bridge through a higher dimension: it bows out of the plane and stays a short <b>1-hop throat</b> ` +
+            `no matter how far you <b>drag</b> the mouths apart. They are distant in the projection yet <em>adjacent</em> in the ` +
+            `structure. <b>Click either ψ</b> to measure it — its partner correlates instantly, because nothing ever crossed space.`,
       mode: 'graph', interactive: 'measure',
-      metrics: ['states', 'hidden-links'],
+      metrics: ['projected', 'structural', 'hidden-links'],
       build(app) {
         const g = app.graph; g.clear(); app.renderer.flow = true;
         // Two distant clusters, each with one "entangled" partner.
@@ -201,64 +206,110 @@
         app.renderer.setCamera(0, 0, 0.85);
       }
     },
+    /* 9b -- light --------------------------------------------------------- */
+    {
+      chapter: '15', title: 'Light', kicker: 'A Direction with No Distinction',
+      body: `Two observers traverse two chains. <b>Top</b> chain: every state is distinguishable, so each step is an ordered ` +
+            `difference — the observer's clock ticks (proper time accrues). <b>Bottom</b> chain is a <em>symmetry direction</em>: ` +
+            `its states are mutually <em>indistinguishable</em>, so moving along it adds no information — the clock never ticks. ` +
+            `A photon rides such a direction: it accumulates <b>no proper time</b>. <em>c</em> is the projected face of that symmetry.`,
+      mode: 'graph',
+      metrics: ['clock-matter', 'clock-light'],
+      build(app) {
+        const g = app.graph; g.clear(); app.renderer.flow = false;
+        const N = 7, top = [], bot = [];
+        for (let i = 0; i < N; i++) {           // distinguishable states (matter)
+          top.push(g.addNode({ x: -300 + i * 100, y: -110, group: i % 6, cls: 't' + i, label: String.fromCharCode(65 + i) }).id);
+        }
+        for (let i = 0; i < N; i++) {           // indistinguishable states (light direction)
+          bot.push(g.addNode({ x: -300 + i * 100, y: 120, group: 0, cls: 'L' }).id);
+        }
+        for (let i = 0; i < N - 1; i++) { g.addEdge(top[i], top[i + 1], 1); g.addEdge(bot[i], bot[i + 1], 1); }
+        app.renderer.seedObservers(0, [top[0], bot[0]]);  // one observer per chain
+        app.renderer.observers[0].obsSpeed = 1;
+        app.renderer.extra.obsSpeed = 1.4;
+        app.renderer.setCamera(0, 0, 1.0);
+      }
+    },
     /* 10 -- mass ---------------------------------------------------------- */
     {
-      chapter: '16', title: 'Mass', kicker: 'Informational Density',
-      body: `Mass is not "stuff." A massive region is one where a great deal of informational structure is packed ` +
-            `into a small projection — many states, many adjacencies. The bright dense knot here carries far more ` +
-            `connectivity than the sparse surroundings. <em>Mass is informational complexity made visible.</em>`,
-      mode: 'graph',
-      metrics: ['states', 'edges', 'density'],
+      chapter: '16', title: 'Mass', kicker: 'Path Density · A → X → C',
+      body: `Mass is not "stuff" — it is <em>path density</em>. Amplitude is injected at <b>A</b> and must fan through the dense ` +
+            `subnetwork <b>X</b> to reach <b>C</b>. Inside X there are many <em>indistinguishable paths and loops</em>, so the fanout ` +
+            `<b>dwells</b> there: amplitude piles up (watch X brighten) and only a trickle is delivered to C. ` +
+            `<em>A region that holds this much path-structure in a small projection is what we call mass.</em>`,
+      mode: 'mass', interactive: 'field-reset',
+      metrics: ['amp-core', 'delivered', 'loops'],
       build(app) {
         const g = app.graph; g.clear(); app.renderer.flow = true;
-        cluster(app, 0, 0, 14, 4, 0.7);            // the massive knot
-        // sparse halo
-        const halo = [];
-        for (let i = 0; i < 8; i++) {
-          const a = (i / 8) * Math.PI * 2;
-          halo.push(g.addNode({ x: Math.cos(a) * 280, y: Math.sin(a) * 280, group: 0 }).id);
-        }
-        for (let i = 0; i < halo.length; i++) g.addEdge(halo[i], halo[(i + 1) % halo.length], 1);
-        app.renderer.setCamera(0, 0, 0.9);
+        const A = g.addNode({ label: 'A', x: -360, y: 0, group: 0, r: 11 }).id;
+        const C = g.addNode({ label: 'C', x: 360, y: 0, group: 1, r: 11 }).id;
+        const X = cluster(app, 0, 0, 11, 4, 0.5, 220);   // dense subnetwork, spread out
+        g.addEdge(A, X[0], 1); g.addEdge(A, X[1], 1);
+        g.addEdge(C, X[X.length - 1], 1); g.addEdge(C, X[X.length - 2], 1);
+        const core = new Set(X);
+        app.renderer.initField([A], { source: A, sink: C, coreSet: core, lazy: 0.6, inject: 0.05, absorb: 0.5 });
+        app.renderer.seedObservers(3, A);
+        app._fieldCore = core;
+        app.renderer.setCamera(0, 0, 0.92);
       }
     },
     /* 11 -- gravity ------------------------------------------------------- */
     {
       chapter: '17 · 18', title: 'Gravity', kicker: 'Path Multiplicity, not Force',
-      body: `Release test particles into the field. They are not "pulled" — a dense informational region simply offers ` +
-            `<em>more paths, more loops, more equivalent continuations</em>, so trajectories become statistically biased toward it. ` +
-            `What we call gravitational attraction is the topology of information. ` +
-            `Tune the coupling <b>G</b> below and watch the bias strengthen.`,
-      mode: 'gravity', interactive: 'gravity',
-      metrics: ['density', 'G', 'captured'],
+      body: `No force acts here. The fanout follows <b>every</b> continuation, so amplitude accumulates wherever there are ` +
+            `<em>more</em> continuations. Its stationary occupancy is <b>∝ local degree</b> — so a uniform haze spontaneously ` +
+            `condenses onto the dense region. Compare the readouts: the measured <b>occupancy at the mass</b> converges to its ` +
+            `<b>share of the graph's paths</b>. "Attraction" is just a counting fact about paths.`,
+      mode: 'gravity', interactive: 'field-reset',
+      metrics: ['occ-core', 'deg-core', 'loops'],
       build(app) {
         const g = app.graph; g.clear(); app.renderer.flow = true;
-        cluster(app, 0, 0, 12, 4, 0.75);
-        app.renderer.extra.G = app._G != null ? app._G : 60;
-        app.renderer.extra.horizon = 0;
-        app.renderer.seedParticles(160, 700);
-        app.renderer.setCamera(0, 0, 0.85);
+        const core = cluster(app, 0, 0, 10, 4, 0.65, 180);     // the mass (dense)
+        const web = [];
+        for (let i = 0; i < 16; i++) {
+          const a = (i / 16) * Math.PI * 2;
+          web.push(g.addNode({ x: Math.cos(a) * 330, y: Math.sin(a) * 330, group: 0 }).id);
+        }
+        for (let i = 0; i < web.length; i++) g.addEdge(web[i], web[(i + 1) % web.length], 1);
+        for (let i = 0; i < web.length; i += 2) g.addEdge(web[i], core[i % core.length], 1);
+        const cs = new Set(core);
+        app.renderer.initField('uniform', { lazy: 0.6, coreSet: cs });
+        app.renderer.seedObservers(2);
+        app._fieldCore = cs;
+        app.renderer.setCamera(0, 0, 0.8);
       }
     },
     /* 12 -- black hole ---------------------------------------------------- */
     {
-      chapter: '19', title: 'Black Hole', kicker: 'An Informational Phase Transition',
-      body: `Push the density higher and a <em>phase transition</em> occurs. Loops multiply, indistinguishable paths ` +
-            `multiply, and internal continuations begin to dominate external ones. Locality breaks: the graph stops ` +
-            `behaving like an open network and becomes self-referential. The glowing ring is that boundary — ` +
-            `<em>the horizon is not infinite density, it is where the information folds inward.</em> Particles that cross cannot return.`,
-      mode: 'blackhole', interactive: 'gravity',
-      metrics: ['density', 'G', 'captured', 'loops'],
+      chapter: '19', title: 'Black Hole', kicker: 'Phase Transition · Locality Breaks',
+      body: `A dense core is joined to the outside by only a few links — the <b>horizon</b>. Slide the <b>leak</b> toward 0 to ` +
+            `throttle those outward continuations. Below a threshold a <em>phase transition</em> occurs: fanout that enters can no ` +
+            `longer find its way out (<b>escape flux → 0</b>), amplitude is trapped, and the region becomes self-referential. ` +
+            `<em>Not infinite density — a change of regime.</em> The observer slices that wander in cannot get back out.`,
+      mode: 'blackhole', interactive: 'leak',
+      metrics: ['amp-core', 'escape', 'leak', 'loops'],
       build(app) {
         const g = app.graph; g.clear(); app.renderer.flow = true;
-        const core = cluster(app, 0, 0, 18, 5, 0.95);
-        // a singular core node
-        const s = g.addNode({ x: 0, y: 0, group: 5, r: 6, tag: 'singularity', pinned: true });
-        for (const id of core) if (Math.random() < 0.5) g.addEdge(s.id, id, 1.5);
-        app.renderer.extra.G = app._G != null ? Math.max(app._G, 120) : 150;
-        app.renderer.extra.horizon = 95;
-        app.renderer.seedParticles(200, 750);
-        app.renderer.setCamera(0, 0, 0.85);
+        const core = cluster(app, 0, 0, 15, 5, 0.85, 150);     // very dense core at origin
+        const s = g.addNode({ x: 0, y: 0, group: 5, r: 6, tag: 'singularity', pinned: true }).id;
+        for (const id of core) if (Math.random() < 0.5) g.addEdge(s, id, 1.5);
+        core.push(s);
+        const web = [];
+        for (let i = 0; i < 14; i++) {
+          const a = (i / 14) * Math.PI * 2;
+          web.push(g.addNode({ x: Math.cos(a) * 350, y: Math.sin(a) * 350, group: 0 }).id);
+        }
+        for (let i = 0; i < web.length; i++) g.addEdge(web[i], web[(i + 1) % web.length], 1);
+        // FEW links from the web to the core = the horizon (throttled by leak).
+        g.addEdge(web[0], core[0], 1); g.addEdge(web[5], core[1], 1); g.addEdge(web[10], core[2], 1);
+        const cs = new Set(core);
+        const leak = app._leak != null ? app._leak : 0.05;
+        app.renderer.initField('uniform', { lazy: 0.55, coreSet: cs, leak });
+        app.renderer.seedObservers(4);
+        app._fieldCore = cs;
+        app.renderer.extra.horizon = 120;
+        app.renderer.setCamera(0, 0, 0.8);
       }
     },
     /* 13 -- big bang ------------------------------------------------------ */

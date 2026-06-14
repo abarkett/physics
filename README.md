@@ -38,21 +38,35 @@ informational universe and watch the metrics emerge.
 | 1 | **Identity** | One node: existence without distinction. `bits = 0`. |
 | 2 | **Distinction** | Two nodes → `A ≠ B`. Information is born. `bits = 1`. |
 | 3 | **Adjacency → distance** | `A—B—C`. *Informational* distance = Σ(1/connectivity). |
-| 4 | **Time** | Pulses traverse ordered differences — time as a *reading* of ordering. |
+| 4 | **Time** | A simultaneous **fanout** with one **observer slice** riding it; the slice's count of ordered differences is the **clock**. |
 | 6 | **Adjacency before space** | Positions are re-derived live from the connectivity matrix. Drag a node. |
 | 7 | **Symmetry → shape** | A symmetric loop *projects* as a circle. |
 | 9 | **π & closure** | A closed loop's `n·sin(π/n)` visibly converges to π as you add states. |
-| 4·10 | **Projection / wavefunction** | A static sphere crossing a plane fakes "time" (Flatland). |
-| 12 | **Entanglement** | Hidden adjacency: measure one node, its partner correlates instantly. |
-| 16 | **Mass** | Informational density — a dense knot of connectivity. |
-| 17·18 | **Gravity** | Test particles bias toward density: path multiplicity, not force. |
-| 19 | **Black hole** | A phase transition with a horizon that captures trajectories. |
+| 4·10 | **Projection / wavefunction** | A static sphere, viewed edge-on, slices to a **point→line→point** segment that fakes "time" (Flatland). |
+| 12 | **Entanglement** | Hidden adjacency drawn as a higher-dimensional **bridge**: short 1-hop throat however far you drag the mouths apart. |
+| 15 | **Light** | Two observers; along a **symmetry direction** (indistinguishable states) the clock never ticks → no proper time. |
+| 16 | **Mass** | Path density: amplitude injected at A must fan through a dense subnetwork X to reach C, and **dwells** there. |
+| 17·18 | **Gravity** | The fanout's stationary occupancy is **∝ degree**; the readout shows measured occupancy converging to the mass's share of paths. **No force.** |
+| 19 | **Black hole** | Throttle the **leak** on the core's outward edges → escape flux → 0; the fanout is trapped. A phase transition, not infinite density. |
 | 21 | **Big Bang** | The earliest *accessible* boundary, not necessarily the beginning. |
 | 22·23 | **Unified picture** | Synthesis → enter the Sandbox. |
 
 Every number in the **Emergent Readout** (top right) is computed live from the
-graph: distinction, information (bits), informational distance, independent
-loops, density, the closure invariant, captured trajectories, and more.
+graph and the fanout: distinction, information (bits), informational distance,
+independent loops, the closure invariant, the observer clock, occupancy vs.
+degree-share, escape flux, and more.
+
+### The rules it obeys
+
+The engine is built on an explicit set of information-first axioms — see
+[`PRINCIPLES.md`](./PRINCIPLES.md). The short version: **nothing may appeal to
+pre-existing space, force, or time.** The one fundamental process is a
+**simultaneous fanout** on the graph (amplitude shared among every adjacency at
+once — the static wavefunction). A single linear trajectory is *not*
+fundamental; it is only an observer's projected slice of that fanout. From this
+one operator, mass & gravity fall out as `occupancy ∝ degree` (path
+multiplicity, no force), black holes as a trapping phase transition, and an
+observer's time as the count of ordered differences along its slice.
 
 ## How the framework maps to the code
 
@@ -67,9 +81,12 @@ The project deliberately mirrors the monograph's central inversion
 - **`js/graph.js → ForceLayout`** — *adjacency projected into space.* Node
   positions are continuously re-derived from connectivity by spring + repulsion
   forces, literally implementing "adjacency before space."
-- **`js/render.js`** — *the projection layer / the shadows.* Glowing nodes,
-  adjacency lines, information pulses (time), gravitational test particles,
-  the Flatland sphere, the closure→π overlay, and the black-hole horizon.
+- **`js/field.js → FanoutField`** — *the one fundamental process.* The
+  simultaneous fanout operator on the graph; its stationary distribution ∝
+  degree gives mass/gravity, and a throttled core gives black holes.
+- **`js/render.js`** — *the projection layer / the shadows.* Glowing nodes (mass
+  = pooled amplitude), fanout flux pulses, **observer slices**, the entanglement
+  bridge, the Flatland slice + filmstrip, the closure→π overlay, the horizon.
 - **`js/stages.js`** — *the monograph, made executable.* Each chapter rebuilds
   the structure one step richer than the last.
 - **`js/main.js`** — controller: narrative, live metric HUD, interactions, sandbox.
