@@ -81,7 +81,8 @@
       this.renderer.extra = {};            // reset per-stage rendering params
       this.renderer.observers = [];        // clear stale slices / fanout
       this.renderer.field = null;
-      this._fieldCore = null;
+      this._fieldCore = null; this._fieldMass = null;
+      this._bh = null; this._bhCore = null; this._uniHorizons = null;
       s.build(this);
 
       this.el.chapter.textContent = 'Chapter ' + s.chapter;
@@ -106,7 +107,7 @@
         'closure-n': 'Tip: use ＋ / － to add or remove states in the loop.',
         measure: 'Tip: drag a ψ node — the bridge stays a 1-hop throat. Click ψ to measure.',
         'field-reset': 'Tip: press Reset to release the fanout again from scratch.',
-        leak: 'Tip: lower the leak to tighten the horizon and trap the fanout.'
+        collapse: 'Tip: add internal links / nodes until the core collapses into a black hole.'
       };
       this.el.hint.textContent = this.sandbox
         ? 'Sandbox: click empty space to add a state · click two nodes to link them · drag to move.'
@@ -136,21 +137,38 @@
       if (s.interactive === 'field-reset') {
         this._addButton(c, '↺ Reset fanout', () => s.build(this));
       }
-      if (s.interactive === 'leak') {
-        const wrap = document.createElement('div'); wrap.className = 'slider';
-        const lab = document.createElement('span'); lab.textContent = 'leak';
-        const inp = document.createElement('input');
-        inp.type = 'range'; inp.min = '0'; inp.max = '100'; inp.value = String(Math.round((this._leak != null ? this._leak : 0.05) * 100));
-        const val = document.createElement('span'); val.className = 'sval';
-        const show = () => { val.textContent = (this._leak != null ? this._leak : 0.05).toFixed(2); };
-        show();
-        inp.addEventListener('input', () => {
-          this._leak = +inp.value / 100; show();
-          if (this.renderer.field) this.renderer.fieldParams.leak = this._leak;
-        });
-        wrap.append(lab, inp, val); c.appendChild(wrap);
+      if (s.interactive === 'collapse') {
+        this._addButton(c, '+ internal links', () => this._bhAddLinks(6));
+        this._addButton(c, '+ node', () => this._bhAddNode());
         this._addButton(c, '↺ Reset', () => s.build(this));
       }
+    },
+
+    // Add internal edges among the black-hole core (raises internal continuations).
+    _bhAddLinks(k) {
+      const cs = this._bhCore; if (!cs) return;
+      const ids = [...cs];
+      let added = 0, tries = 0;
+      while (added < k && tries < 400) {
+        tries++;
+        const a = ids[(Math.random() * ids.length) | 0], b = ids[(Math.random() * ids.length) | 0];
+        if (a !== b && !this.graph.findEdge(a, b)) { this.graph.addEdge(a, b, 1); added++; }
+      }
+      if (this.renderer.field) this.renderer.field.build();   // refresh fanout adjacency
+    },
+
+    // Add a node wired densely into the core.
+    _bhAddNode() {
+      const cs = this._bhCore; if (!cs) return;
+      const ids = [...cs];
+      let cx = 0, cy = 0;
+      for (const id of ids) { const n = this.graph.get(id); cx += n.x; cy += n.y; }
+      cx /= ids.length; cy /= ids.length;
+      const node = this.graph.addNode({ x: cx + (Math.random() - 0.5) * 120, y: cy + (Math.random() - 0.5) * 120, group: 5 });
+      cs.add(node.id);
+      const shuffled = ids.slice().sort(() => Math.random() - 0.5);
+      for (let i = 0; i < Math.min(6, shuffled.length); i++) this.graph.addEdge(node.id, shuffled[i], 1);
+      if (this.renderer.field) this.renderer.field.build();
     },
 
     _addButton(parent, label, fn) {
@@ -360,7 +378,27 @@
             add('Escape flux', v < 1e-4 ? '≈ 0' : v.toFixed(4), v < 1e-4 ? 'trapped — horizon closed' : 'amplitude leaving the core');
             break;
           }
-          case 'leak': add('Horizon leak', (this._leak != null ? this._leak : 0.05).toFixed(2), 'outward continuations'); break;
+          case 'phase': {
+            const c = this._bh && this._bh.collapsed;
+            add('Phase', c ? 'COLLAPSED' : 'open network', c ? 'horizon formed — trapped' : 'continuations still escape');
+            break;
+          }
+          case 'p-escape': {
+            const p = this._bh ? this._bh.p : 1;
+            add('Escape probability', (p * 100).toFixed(1) + '%', 'of a step from inside leaves the core');
+            break;
+          }
+          case 'ratio': {
+            const bh = this._bh || { internal: 0, external: 0 };
+            add('Internal : external', bh.internal + ' : ' + bh.external, 'continuations');
+            break;
+          }
+          case 'horizons': add('Black holes', r.extra.horizons ? r.extra.horizons.length : 0, 'collapsed regions'); break;
+          case 'occ-mass': {
+            const f = r.field, set = this._fieldMass;
+            add('Amplitude in masses', f && set ? (f.massIn(set) * 100).toFixed(0) + '%' : '—', 'fanout pooled by gravity');
+            break;
+          }
         }
       }
       this._renderMetrics(rows);
@@ -380,6 +418,11 @@
       if (this.playing) {
         const steps = 2;
         for (let i = 0; i < steps; i++) this.layout.step(dt / steps);
+      }
+      // Per-frame stage update (e.g. black-hole collapse detection / horizons).
+      if (!this.sandbox) {
+        const s = IF.STAGES[this.stageIndex];
+        if (s && s.update) s.update(this);
       }
       this.renderer.render(this.playing ? dt : 0.0001);
       this._updateMetrics();

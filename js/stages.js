@@ -282,34 +282,55 @@
     },
     /* 12 -- black hole ---------------------------------------------------- */
     {
-      chapter: '19', title: 'Black Hole', kicker: 'Phase Transition · Locality Breaks',
-      body: `A dense core is joined to the outside by only a few links — the <b>horizon</b>. Slide the <b>leak</b> toward 0 to ` +
-            `throttle those outward continuations. Below a threshold a <em>phase transition</em> occurs: fanout that enters can no ` +
-            `longer find its way out (<b>escape flux → 0</b>), amplitude is trapped, and the region becomes self-referential. ` +
-            `<em>Not infinite density — a change of regime.</em> The observer slices that wander in cannot get back out.`,
-      mode: 'blackhole', interactive: 'leak',
-      metrics: ['amp-core', 'escape', 'leak', 'loops'],
+      chapter: '19', title: 'Black Hole', kicker: 'Collapse · A Phase Transition',
+      body: `Start with an ordinary cluster wired to the rest of the universe — <b>no horizon</b>. Now <b>add internal ` +
+            `connections</b> (or <b>nodes</b>) to the core. Each one raises the share of continuations that stay <em>inside</em>. ` +
+            `Watch the escape probability fall: when internal continuations <em>dominate</em> external ones, the region <b>collapses</b> ` +
+            `— a horizon snaps into being, escape flux → 0, and the fanout can no longer get out. <em>The horizon is emergent, not built in.</em>`,
+      mode: 'blackhole', interactive: 'collapse',
+      metrics: ['phase', 'p-escape', 'ratio', 'escape'],
       build(app) {
         const g = app.graph; g.clear(); app.renderer.flow = true;
-        const core = cluster(app, 0, 0, 15, 5, 0.85, 150);     // very dense core at origin
-        const s = g.addNode({ x: 0, y: 0, group: 5, r: 6, tag: 'singularity', pinned: true }).id;
-        for (const id of core) if (Math.random() < 0.5) g.addEdge(s, id, 1.5);
-        core.push(s);
+        const core = cluster(app, 0, 0, 12, 5, 0.14, 240);   // ordinary, loosely-connected core
         const web = [];
-        for (let i = 0; i < 14; i++) {
-          const a = (i / 14) * Math.PI * 2;
-          web.push(g.addNode({ x: Math.cos(a) * 350, y: Math.sin(a) * 350, group: 0 }).id);
+        for (let i = 0; i < 16; i++) {
+          const a = (i / 16) * Math.PI * 2;
+          web.push(g.addNode({ x: Math.cos(a) * 360, y: Math.sin(a) * 360, group: 0 }).id);
         }
         for (let i = 0; i < web.length; i++) g.addEdge(web[i], web[(i + 1) % web.length], 1);
-        // FEW links from the web to the core = the horizon (throttled by leak).
-        g.addEdge(web[0], core[0], 1); g.addEdge(web[5], core[1], 1); g.addEdge(web[10], core[2], 1);
+        // A handful of external links (these stay fixed; collapse comes from inside).
+        g.addEdge(web[0], core[0], 1); g.addEdge(web[5], core[1], 1);
+        g.addEdge(web[10], core[2], 1); g.addEdge(web[13], core[3], 1);
         const cs = new Set(core);
-        const leak = app._leak != null ? app._leak : 0.05;
-        app.renderer.initField('uniform', { lazy: 0.55, coreSet: cs, leak });
+        app.renderer.initField('uniform', { lazy: 0.55, coreSet: cs });  // NO leak — trapping emerges
         app.renderer.seedObservers(4);
-        app._fieldCore = cs;
-        app.renderer.extra.horizon = 120;
+        app._fieldCore = cs; app._bhCore = cs;
+        app.renderer.extra.horizon = 0;             // no horizon yet
+        app.renderer.extra.horizonCenter = { x: 0, y: 0 };
+        app._bh = { internal: 0, external: 4, p: 1, collapsed: false };
         app.renderer.setCamera(0, 0, 0.8);
+      },
+      update(app) {
+        const g = app.graph, cs = app._bhCore; if (!cs) return;
+        let internal = 0, external = 0, cx = 0, cy = 0, k = 0;
+        for (const e of g.edges) {
+          const a = cs.has(e.a), b = cs.has(e.b);
+          if (a && b) internal++; else if (a || b) external++;
+        }
+        for (const id of cs) { const n = g.get(id); if (n) { cx += n.x; cy += n.y; k++; } }
+        if (k) { cx /= k; cy /= k; }
+        // Escape probability of a fanout step taken from inside the core.
+        const ends = 2 * internal + external;
+        const p = ends > 0 ? external / ends : 1;
+        const collapsed = p <= 0.09;               // internal continuations dominate
+        app._bh = { internal, external, p, collapsed };
+        // Horizon radius from the (contracting) core extent — eases in/out.
+        let R = 0;
+        for (const id of cs) { const n = g.get(id); if (n) R = Math.max(R, Math.hypot(n.x - cx, n.y - cy)); }
+        const target = collapsed ? R + 45 : 0;
+        const cur = app.renderer.extra.horizon || 0;
+        app.renderer.extra.horizon = cur + (target - cur) * 0.07;
+        app.renderer.extra.horizonCenter = { x: cx, y: cy };
       }
     },
     /* 13 -- big bang ------------------------------------------------------ */
@@ -340,28 +361,75 @@
     },
     /* 14 -- synthesis ----------------------------------------------------- */
     {
-      chapter: '22 · 23', title: 'The Unified Picture', kicker: 'Information First',
-      body: `Information is fundamental. Distinction emerges from it; time from change; geometry from connectivity; ` +
-            `spacetime from geometry; mass from density; gravity from path multiplicity; horizons from loop dominance. ` +
-            `The universe is not a process — <em>it is a structure</em>, whose shadows we read as the physical world. ` +
-            `Enter the <b>Sandbox</b> to build your own informational universe and watch the metrics emerge.`,
-      mode: 'graph',
-      metrics: ['states', 'edges', 'loops', 'bits', 'density'],
+      chapter: '22 · 23', title: 'The Unified Picture', kicker: 'One Structure, Many Shadows',
+      body: `One universe, one process. The fanout pools into <b>masses</b>; two of them are collapsed <b>black holes</b> with ` +
+            `emergent horizons (amplitude trapped inside). The hexagonal <b>symmetric regions</b> are loops where states are ` +
+            `equivalent — observer slices circulate there forever without accumulating distinction: <em>light</em>. Sparser ` +
+            `space bridges it all. Every phenomenon here is the same graph + fanout. <em>The universe is a structure, not a process.</em> ` +
+            `Now open the <b>Sandbox</b> and build your own.`,
+      mode: 'universe',
+      metrics: ['states', 'loops', 'horizons', 'occ-mass'],
       build(app) {
         const g = app.graph; g.clear(); app.renderer.flow = true;
-        const c1 = cluster(app, -180, -60, 7, 1, 0.6);
-        const c2 = cluster(app, 180, -40, 6, 2, 0.6);
-        // a ring built in-place (NOT via ring(), which would clear the graph)
-        const r = [];
-        for (let i = 0; i < 6; i++) {
-          const a = (i / 6) * Math.PI * 2 - Math.PI / 2;
-          r.push(g.addNode({ x: Math.cos(a) * 120, y: 160 + Math.sin(a) * 120, group: 4 }).id);
+        const horizons = [];        // collapsed cores → drawn horizons
+        const massCores = [];       // all dense cores (for occupancy metric)
+
+        // Two collapsed black holes: dense cores with very few external links.
+        const bh = (cx, cy) => {
+          const core = cluster(app, cx, cy, 11, 5, 0.9, 150);
+          massCores.push(...core);
+          horizons.push({ core, cx, cy });
+          return core;
+        };
+        const bh1 = bh(-330, -120);
+        const bh2 = bh(300, 150);
+
+        // A symmetric region = a clean ring of indistinguishable states (light).
+        const ringIds = [];
+        const rcx = 40, rcy = -180, rR = 110;
+        for (let i = 0; i < 9; i++) {
+          const a = (i / 9) * Math.PI * 2 - Math.PI / 2;
+          ringIds.push(g.addNode({ x: rcx + Math.cos(a) * rR, y: rcy + Math.sin(a) * rR, group: 0, cls: 'L' }).id);
         }
-        for (let i = 0; i < 6; i++) g.addEdge(r[i], r[(i + 1) % 6], 1);
-        // bridge the three regions
-        g.addEdge(c1[0], r[0], 0.6);
-        g.addEdge(c2[0], r[3], 0.6);
-        app.renderer.setCamera(0, 0, 0.85);
+        for (let i = 0; i < 9; i++) g.addEdge(ringIds[i], ringIds[(i + 1) % 9], 1);
+
+        // An ordinary (uncollapsed) mass.
+        const lump = cluster(app, -40, 140, 8, 1, 0.5, 160);
+        massCores.push(...lump);
+
+        // Sparse space connecting everything.
+        const space = [];
+        for (let i = 0; i < 18; i++) {
+          const a = (i / 18) * Math.PI * 2;
+          space.push(g.addNode({ x: Math.cos(a) * 470, y: Math.sin(a) * 470, group: 2 }).id);
+        }
+        for (let i = 0; i < space.length; i++) g.addEdge(space[i], space[(i + 1) % space.length], 1);
+        // bridge regions into the cosmic web (few links each)
+        g.addEdge(space[1], bh1[0], 1); g.addEdge(space[9], bh2[0], 1);
+        g.addEdge(space[4], ringIds[0], 1); g.addEdge(space[6], lump[0], 1);
+        g.addEdge(space[13], lump[1], 1);
+
+        const mass = new Set(massCores);
+        app.renderer.initField('uniform', { lazy: 0.6 });
+        app.renderer.seedObservers(6);
+        // one observer dedicated to the light ring, to show perpetual circulation
+        app.renderer.observers[0].from = ringIds[0];
+        app.renderer.observers[0].to = ringIds[1];
+        app._fieldMass = mass;
+        app._uniHorizons = horizons;
+        app.renderer.extra.horizons = horizons.map(h => ({ x: h.cx, y: h.cy, r: 0 }));
+        app.renderer.setCamera(0, 0, 0.62);
+      },
+      update(app) {
+        const hs = app._uniHorizons; if (!hs) return;
+        const g = app.graph;
+        app.renderer.extra.horizons = hs.map(h => {
+          let cx = 0, cy = 0, k = 0, R = 0;
+          for (const id of h.core) { const n = g.get(id); if (n) { cx += n.x; cy += n.y; k++; } }
+          if (k) { cx /= k; cy /= k; }
+          for (const id of h.core) { const n = g.get(id); if (n) R = Math.max(R, Math.hypot(n.x - cx, n.y - cy)); }
+          return { x: cx, y: cy, r: R + 40 };
+        });
       }
     }
   ];

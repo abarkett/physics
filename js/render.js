@@ -144,7 +144,8 @@
 
       const live = dt > 1;   // false when paused (main passes ~0)
       const fieldMode = this.mode === 'mass' || this.mode === 'gravity' ||
-                        this.mode === 'blackhole' || this.mode === 'fanout';
+                        this.mode === 'blackhole' || this.mode === 'fanout' ||
+                        this.mode === 'universe';
 
       if (fieldMode && this.field) {
         if (live) this.field.step(this.fieldParams);
@@ -160,6 +161,9 @@
 
       if (this.mode === 'closure') this._closureOverlay();
       if (this.mode === 'blackhole') this._horizonOverlay();
+      if (this.mode === 'universe' && this.extra.horizons) {
+        for (const h of this.extra.horizons) this._drawHorizon(h.x, h.y, h.r);
+      }
       if (this.extra.distancePair) this._drawDistance(this.extra.distancePair);
     }
 
@@ -449,10 +453,17 @@
 
     _horizonOverlay() {
       const horizon = this.extra.horizon || 0;
-      if (horizon <= 0) return;
+      if (horizon <= 0.5) return;
+      const hc = this.extra.horizonCenter || { x: 0, y: 0 };
+      this._drawHorizon(hc.x, hc.y, horizon);
+    }
+
+    // Draw an event horizon (dark interior + glowing ring) at a world position.
+    _drawHorizon(worldX, worldY, worldR) {
+      if (worldR <= 0.5) return;
       const ctx = this.ctx;
-      const c = this.worldToScreen(0, 0);
-      const Rp = horizon * this.cam.zoom;
+      const c = this.worldToScreen(worldX, worldY);
+      const Rp = worldR * this.cam.zoom;
       // Dark interior.
       const gl = ctx.createRadialGradient(c.x, c.y, Rp * 0.2, c.x, c.y, Rp);
       gl.addColorStop(0, 'rgba(0,0,0,0.95)');
