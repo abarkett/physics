@@ -125,9 +125,14 @@
         return;
       }
       if (s.interactive === 'closure-n') {
-        this._addButton(c, '－', () => { this._closureN = Math.max(3, this._closureN - 1); s.build(this); });
+        const refresh = () => {
+          s.build(this);
+          const lab = document.getElementById('nLabel');
+          if (lab) lab.textContent = 'n = ' + this._closureN;
+        };
+        this._addButton(c, '－', () => { this._closureN = Math.max(3, this._closureN - 1); refresh(); });
         this._addLabel(c, 'n = ' + this._closureN, 'nLabel');
-        this._addButton(c, '＋', () => { this._closureN = Math.min(64, this._closureN + 1); s.build(this); });
+        this._addButton(c, '＋', () => { this._closureN = Math.min(64, this._closureN + 1); refresh(); });
       }
       if (s.interactive === 'gravity') {
         const wrap = document.createElement('div'); wrap.className = 'slider';
