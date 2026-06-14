@@ -283,6 +283,58 @@
       const e = this.graph.findEdge(a, b); if (e) e.flow = 0;
     },
 
+    /* ----- sandbox physics: run the real engine on whatever is built ----- */
+    _sandboxUpdate() {
+      const g = this.graph, r = this.renderer;
+      const topo = g.nodes.length + '/' + g.edges.length;
+      if (!r.field || topo !== this._sandboxTopo) {
+        // (re)build the fanout over the current structure; reseed observers
+        r.initField('uniform', { lazy: 0.6 });
+        this._sandboxTopo = topo;
+        if (g.nodes.length >= 3) r.seedObservers(Math.min(4, g.nodes.length));
+        else r.observers = [];
+      }
+      // Emergent black holes: dense regions whose internal continuations dominate.
+      const holes = this._detectBlackHoles();
+      this._sandboxHoles = holes;
+      const next = new Map();
+      r.extra.horizons = holes.map(h => {
+        const cur = this._holeR.get(h.key) || 0;
+        const rr = cur + (h.r - cur) * 0.12;     // ease the horizon in on collapse
+        next.set(h.key, rr);
+        return { x: h.x, y: h.y, r: rr };
+      });
+      this._holeR = next;
+    },
+
+    // Find dense connected cores whose escape probability has fallen past the
+    // collapse threshold (internal continuations dominate external) — same R12
+    // criterion used in the Black Hole chapter, applied to arbitrary graphs.
+    _detectBlackHoles() {
+      const g = this.graph;
+      const dense = new Set(g.nodes.filter(n => g.degree(n.id) >= 4).map(n => n.id));
+      const seen = new Set(), holes = [];
+      for (const n of g.nodes) {
+        if (!dense.has(n.id) || seen.has(n.id)) continue;
+        const comp = [], stack = [n.id];
+        while (stack.length) {
+          const u = stack.pop(); if (seen.has(u)) continue; seen.add(u); comp.push(u);
+          for (const v of g.neighbors(u)) if (dense.has(v) && !seen.has(v)) stack.push(v);
+        }
+        if (comp.length < 5) continue;
+        const S = new Set(comp);
+        let internal = 0, external = 0;
+        for (const e of g.edges) { const a = S.has(e.a), b = S.has(e.b); if (a && b) internal++; else if (a || b) external++; }
+        const ends = 2 * internal + external, p = ends > 0 ? external / ends : 1;
+        if (p > 0.09) continue;                  // not collapsed yet
+        let cx = 0, cy = 0; for (const id of comp) { const nd = g.get(id); cx += nd.x; cy += nd.y; }
+        cx /= comp.length; cy /= comp.length;
+        let R = 0; for (const id of comp) { const nd = g.get(id); R = Math.max(R, Math.hypot(nd.x - cx, nd.y - cy)); }
+        holes.push({ x: cx, y: cy, r: R + 42, p, internal, external, key: Math.min.apply(null, comp), size: comp.length });
+      }
+      return holes;
+    },
+
     _sandboxRandom(k) {
       const ids = this.graph.nodes.map(n => n.id);
       for (let i = 0; i < k; i++) {
@@ -298,16 +350,19 @@
       this.el.sandboxBtn.classList.toggle('active', want);
       this.el.sandboxBtn.textContent = want ? '✦ Exit Sandbox' : '✦ Sandbox';
       if (want) {
-        this.renderer.mode = 'graph'; this.renderer.flow = true; this.renderer.extra = {};
+        this.renderer.mode = 'universe';      // run the real engine (fanout + horizons)
+        this.renderer.flow = true; this.renderer.extra = { horizons: [] };
         this.renderer.observers = []; this.renderer.field = null;
         this.el.viewToggle.hidden = true;
         this.graph.clear();
+        this._sandboxTopo = null; this._holeR = new Map(); this._sandboxHoles = [];
         this.el.chapter.textContent = 'Free Play';
         this.el.kicker.textContent = 'Build an Informational Universe';
         this.el.title.textContent = 'Sandbox';
-        this.el.body.innerHTML = 'Click empty space to add a distinguishable <b>state</b>. Click one node then another to ' +
-          'create an <b>adjacency</b>. Drag to move. The metrics on the right are computed live from the structure you build — ' +
-          'distinction, information, loops, gravity-bearing density. <em>Watch geometry and physics emerge from nothing but relationships.</em>';
+        this.el.body.innerHTML = 'Click empty space to add a <b>state</b>; click one node then another to add an <b>adjacency</b>; drag to move. ' +
+          'The full engine runs live on whatever you build: the <em>fanout</em> pools into dense regions (<b>mass &amp; gravity</b>), and ' +
+          'any region whose <em>internal</em> continuations come to dominate its <em>external</em> ones <b>collapses into a black hole</b> — ' +
+          'a horizon appears on its own. Try a dense blob with only a link or two to the outside.';
         this.renderer.setCamera(0, 0, 1);
         this._buildControls({});
         this._setHint({});
@@ -323,13 +378,17 @@
       const add = (k, v, sub) => rows.push({ k, v, sub });
 
       if (this.sandbox) {
+        const holes = this._sandboxHoles || [];
         add('States', g.nodes.length, 'distinguishable');
         add('Adjacencies', g.edges.length, 'relations');
-        add('Information', g.bits.toFixed(2), 'bits  (log₂ states)');
         add('Independent loops', g.loopCount, 'path multiplicity');
-        add('Components', g.componentCount(), 'disconnected regions');
-        const dens = g.densityAt(0, 0, 220).toFixed(1);
-        add('Central density', dens, 'mass proxy');
+        add('Black holes', holes.length, 'collapsed regions');
+        if (holes.length) {
+          const minp = Math.min.apply(null, holes.map(h => h.p));
+          add('Lowest escape', (minp * 100).toFixed(1) + '%', 'internal continuations dominate');
+        } else {
+          add('Information', g.bits.toFixed(2), 'bits  (log₂ states)');
+        }
         this._renderMetrics(rows); return;
       }
 
@@ -469,8 +528,10 @@
         const steps = 2;
         for (let i = 0; i < steps; i++) this.layout.step(dt / steps);
       }
-      // Per-frame stage update (e.g. black-hole collapse detection / horizons).
-      if (!this.sandbox && !this.classicView) {
+      // Per-frame update: sandbox physics, or the current stage's own update.
+      if (this.sandbox) {
+        this._sandboxUpdate();
+      } else if (!this.classicView) {
         const s = IF.STAGES[this.stageIndex];
         if (s && s.update) s.update(this);
       }
