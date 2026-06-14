@@ -56,6 +56,26 @@ graph and the fanout: distinction, information (bits), informational distance,
 independent loops, the closure invariant, the observer clock, occupancy vs.
 degree-share, escape flux, and more.
 
+### Information First ⇄ Classical
+
+Most chapters carry a **toggle** (top of the narrative panel, or press **C**)
+that switches the canvas between the information-first view and the *textbook*
+**GR / QM / Newtonian** picture, drawn with traditional, non-graph
+visualizations so you can contrast them directly:
+
+| Chapter | Classical view |
+|---|---|
+| Time | Newtonian absolute timeline + uniform clock |
+| Adjacency before space | Fixed Cartesian coordinate grid |
+| Symmetry / π | A continuous Euclidean circle (`C = 2πr`, π given) |
+| Wavefunction | A Schrödinger wave packet evolving + collapsing |
+| Entanglement | A Bell pair separating in real space ("spooky action") |
+| Light | A Minkowski **light cone**, `ds²=0 ⇒ dτ=0` |
+| Mass | A solid body with `E = mc²` |
+| Gravity | The GR **rubber-sheet** well with an orbiting body |
+| Black hole | A Schwarzschild **funnel** + horizon at `r_s = 2GM/c²` |
+| Big Bang | An **expanding** ΛCDM universe from a singularity |
+
 ### The rules it obeys
 
 The engine is built on an explicit set of information-first axioms — see

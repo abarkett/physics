@@ -10,7 +10,7 @@
 
   const App = {
     graph: null, layout: null, renderer: null,
-    stageIndex: 0, playing: true, sandbox: false,
+    stageIndex: 0, playing: true, sandbox: false, classicView: false,
     _closureN: 6, _G: 60, _entPair: null,
     _last: 0, _drag: null,
 
@@ -43,8 +43,10 @@
         sandboxBtn: document.getElementById('sandboxBtn'),
         controls: document.getElementById('stageControls'),
         progressNum: document.getElementById('progressNum'),
-        hint: document.getElementById('hint')
+        hint: document.getElementById('hint'),
+        viewToggle: document.getElementById('viewToggle')
       };
+      this.el.vtBtns = [...this.el.viewToggle.querySelectorAll('.vt-btn')];
       // progress dots
       IF.STAGES.forEach((s, i) => {
         const d = document.createElement('button');
@@ -63,10 +65,12 @@
         this.el.play.textContent = this.playing ? '❚❚ Pause' : '▶ Play';
       });
       this.el.sandboxBtn.addEventListener('click', () => this.toggleSandbox());
+      this.el.vtBtns.forEach(b => b.addEventListener('click', () => this.setView(b.dataset.view === 'classic')));
       document.addEventListener('keydown', e => {
         if (e.target.tagName === 'INPUT') return;
         if (e.key === 'ArrowRight') this.gotoStage(this.stageIndex + 1);
         else if (e.key === 'ArrowLeft') this.gotoStage(this.stageIndex - 1);
+        else if (e.key.toLowerCase() === 'c') this.setView(!this.classicView);
         else if (e.key === ' ') { e.preventDefault(); this.el.play.click(); }
         else if (e.key.toLowerCase() === 's') this.toggleSandbox();
       });
@@ -76,26 +80,47 @@
       if (this.sandbox) this.toggleSandbox(false);
       i = Math.max(0, Math.min(IF.STAGES.length - 1, i));
       this.stageIndex = i;
-      const s = IF.STAGES[i];
-      this.renderer.mode = s.mode;
-      this.renderer.extra = {};            // reset per-stage rendering params
-      this.renderer.observers = [];        // clear stale slices / fanout
+      this._applyStage();
+    },
+
+    setView(classic) {
+      this.classicView = !!classic;
+      if (!this.sandbox) this._applyStage();
+    },
+
+    // Build the current stage in either the information-first or classical view.
+    _applyStage() {
+      const i = this.stageIndex, s = IF.STAGES[i];
+      const useClassic = this.classicView && !!s.classic;
+      const view = useClassic ? s.classic : s;
+
+      this.renderer.mode = view.mode;
+      this.renderer.extra = {};
+      this.renderer.observers = [];
       this.renderer.field = null;
+      this.renderer.flow = true;
       this._fieldCore = null; this._fieldMass = null;
       this._bh = null; this._bhCore = null; this._uniHorizons = null;
-      s.build(this);
+
+      if (useClassic) { this.graph.clear(); if (view.build) view.build(this); }
+      else s.build(this);
 
       this.el.chapter.textContent = 'Chapter ' + s.chapter;
-      this.el.kicker.textContent = s.kicker;
+      this.el.kicker.textContent = useClassic ? (view.badge || 'Classical') : s.kicker;
       this.el.title.textContent = s.title;
-      this.el.body.innerHTML = s.body;
+      this.el.body.innerHTML = useClassic ? view.body : s.body;
       this.el.progressNum.textContent = (i + 1) + ' / ' + IF.STAGES.length;
       [...this.el.dots.children].forEach((d, k) => d.classList.toggle('active', k === i));
       this.el.prev.disabled = i === 0;
       this.el.next.disabled = i === IF.STAGES.length - 1;
 
-      this._buildControls(s);
-      this._setHint(s);
+      // toggle visibility + active state
+      this.el.viewToggle.hidden = !s.classic;
+      this.el.vtBtns.forEach(b => b.classList.toggle('active',
+        (b.dataset.view === 'classic') === useClassic));
+
+      this._buildControls(useClassic ? {} : s);
+      this._setHint(useClassic ? {} : s);
     },
 
     // (no shared force knobs anymore — the fanout is the only process)
@@ -262,6 +287,7 @@
       if (want) {
         this.renderer.mode = 'graph'; this.renderer.flow = true; this.renderer.extra = {};
         this.renderer.observers = []; this.renderer.field = null;
+        this.el.viewToggle.hidden = true;
         this.graph.clear();
         this.el.chapter.textContent = 'Free Play';
         this.el.kicker.textContent = 'Build an Informational Universe';
@@ -295,6 +321,11 @@
       }
 
       const s = IF.STAGES[this.stageIndex];
+      // Classical view shows a fixed readout of the textbook law.
+      if (this.classicView && s.classic) {
+        this._renderMetrics((s.classic.readout || []).map(r => ({ k: r.k, v: r.v, sub: r.sub })));
+        return;
+      }
       const want = s.metrics || [];
       for (const m of want) {
         switch (m) {
@@ -420,7 +451,7 @@
         for (let i = 0; i < steps; i++) this.layout.step(dt / steps);
       }
       // Per-frame stage update (e.g. black-hole collapse detection / horizons).
-      if (!this.sandbox) {
+      if (!this.sandbox && !this.classicView) {
         const s = IF.STAGES[this.stageIndex];
         if (s && s.update) s.update(this);
       }

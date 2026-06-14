@@ -434,6 +434,82 @@
     }
   ];
 
+  /* ---------------------------------------------------------------------------
+   * CLASSICAL counterparts. Attached to stages that have a meaningful textbook
+   * GR / QM / Newtonian picture, so the user can toggle and contrast. These use
+   * TRADITIONAL visualisations (no graphs) drawn by the renderer's classic modes.
+   * ------------------------------------------------------------------------- */
+  const CLASSIC = {
+    'Information Creates Time': {
+      badge: 'Newtonian · absolute time', mode: 'classic-time',
+      body: `In the classical picture, <b>time is a given</b>: a universal external parameter <em>t</em> that flows uniformly and ` +
+            `identically for every observer. Change happens <em>within</em> time. Here time is the stage, not something that emerges — ` +
+            `the exact inversion of the information-first view.`,
+      readout: [{ k: 'Model', v: 'Newtonian', sub: 'time is fundamental' }, { k: 'Clock', v: 't', sub: 'absolute, universal' }]
+    },
+    'Adjacency before Space': {
+      badge: 'Newtonian · absolute space', mode: 'classic-space',
+      body: `Classically, <b>space is a fixed coordinate stage</b>. Every object sits at absolute coordinates (x, y, z); distance is ` +
+            `read straight off the grid. Space exists first and contains the things — the opposite of "adjacency before space."`,
+      readout: [{ k: 'Model', v: 'Euclidean ℝ³', sub: 'space is a container' }, { k: 'Distance', v: '√Σ(Δx)²', sub: 'from coordinates' }]
+    },
+    'Symmetry projects as Shape': {
+      badge: 'Euclidean geometry', mode: 'classic-circle',
+      body: `Classically a <b>circle is a primitive continuous object</b> — the set of points equidistant from a center. Its symmetry ` +
+            `is a property it simply <em>has</em>. Shape is given; it does not emerge from informational invariance.`,
+      readout: [{ k: 'Object', v: 'circle', sub: 'continuous, primitive' }, { k: 'Symmetry', v: 'O(2)', sub: 'a given property' }]
+    },
+    'π and Informational Closure': {
+      badge: 'Euclidean geometry', mode: 'classic-circle',
+      body: `Classically <b>π is just the ratio</b> of a circle's circumference to its diameter — a fixed constant of continuous ` +
+            `geometry, <em>C = 2πr</em>, taken as given rather than emerging from closure of a discrete structure.`,
+      readout: [{ k: 'π', v: '3.14159…', sub: 'a given constant' }, { k: 'Circle', v: 'C = 2πr', sub: 'exact, continuous' }]
+    },
+    'Projection & the Wavefunction': {
+      badge: 'Quantum Mechanics', mode: 'classic-wave',
+      body: `In standard QM the <b>wavefunction genuinely evolves in time</b> by the Schrödinger equation — a packet that moves and ` +
+            `spreads — and <b>measurement collapses it</b> as a real, dynamical event. Time and change are built in, not projected.`,
+      readout: [{ k: 'Law', v: 'iħ∂ψ/∂t = Ĥψ', sub: 'unitary evolution' }, { k: 'Measurement', v: 'collapse', sub: 'a dynamical event' }]
+    },
+    'Entanglement': {
+      badge: 'Quantum Mechanics', mode: 'classic-entangle',
+      body: `Textbook QM keeps the particles <b>genuinely far apart in space</b> and accepts <b>non-local correlations</b> — measuring ` +
+            `one instantly fixes the other ("spooky action at a distance"). The distance is real; the link is a mystery, not a hidden adjacency.`,
+      readout: [{ k: 'State', v: '|↑↓⟩ − |↓↑⟩', sub: 'Bell pair' }, { k: 'Correlation', v: 'non-local', sub: 'across real distance' }]
+    },
+    'Light': {
+      badge: 'Special Relativity', mode: 'classic-light',
+      body: `In relativity, light travels the <b>null cone</b>: <em>ds² = 0</em>, so a photon's <b>proper time is zero</b> via the ` +
+            `Minkowski metric. <em>c</em> is a postulated invariant speed — the structure of spacetime itself, taken as given.`,
+      readout: [{ k: 'Metric', v: 'ds² = −c²dt² + dx²', sub: 'Minkowski' }, { k: 'Photon', v: 'dτ = 0', sub: 'on the null cone' }]
+    },
+    'Mass': {
+      badge: 'Classical mechanics', mode: 'classic-mass',
+      body: `Classically, <b>mass is a primitive quantity</b> of matter/energy — a number attached to a body (<em>E = mc²</em>). ` +
+            `It is what it is; it does not emerge from how much structure is packed into a region.`,
+      readout: [{ k: 'Mass', v: 'm', sub: 'a primitive quantity' }, { k: 'Energy', v: 'E = mc²', sub: 'matter ↔ energy' }]
+    },
+    'Gravity': {
+      badge: 'General Relativity', mode: 'classic-gravity',
+      body: `General relativity says <b>mass-energy curves spacetime</b>, and free bodies follow the <b>geodesics</b> of that curvature ` +
+            `(the rubber-sheet picture). Gravity is geometry — but spacetime is the fundamental thing being bent, not an emergent projection.`,
+      readout: [{ k: 'Law', v: 'Gμν = 8πTμν', sub: 'Einstein field eqn' }, { k: 'Motion', v: 'geodesic', sub: 'of curved spacetime' }]
+    },
+    'Black Hole': {
+      badge: 'General Relativity', mode: 'classic-blackhole',
+      body: `The Schwarzschild solution: curvature runs away to a <b>singularity</b>, with an <b>event horizon</b> at ` +
+            `<em>r_s = 2GM/c²</em> where escape velocity exceeds <em>c</em>. The horizon is a feature of the spacetime metric, fixed by mass alone.`,
+      readout: [{ k: 'Horizon', v: 'r_s = 2GM/c²', sub: 'Schwarzschild radius' }, { k: 'Interior', v: 'singularity', sub: 'curvature → ∞' }]
+    },
+    'The Big Bang': {
+      badge: 'ΛCDM cosmology', mode: 'classic-bigbang',
+      body: `Standard cosmology: <b>space itself expands</b> from an initial singularity about <b>13.8 billion years ago</b>; galaxies ` +
+            `recede and redshift (Hubble's law). The Big Bang is a real beginning of space and time, not merely the edge of our access.`,
+      readout: [{ k: 'Model', v: 'ΛCDM', sub: 'expanding space' }, { k: 'Age', v: '≈ 13.8 Gyr', sub: 'since the singularity' }]
+    }
+  };
+  for (const s of STAGES) if (CLASSIC[s.title]) s.classic = CLASSIC[s.title];
+
   root.IF = root.IF || {};
   root.IF.STAGES = STAGES;
   root.IF._helpers = { ring, cluster };

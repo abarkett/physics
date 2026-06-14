@@ -140,6 +140,7 @@
 
       if (this.mode === 'void') { this._void(); return; }
       if (this.mode === 'flatland') { this._flatland(); return; }
+      if (this.mode.indexOf('classic-') === 0) { this._classic(); return; }
       if (this.mode === 'bigbang') { this._bigbang(); }
 
       const live = dt > 1;   // false when paused (main passes ~0)
@@ -605,6 +606,300 @@
       ctx.strokeStyle = `rgba(255,200,120,${0.4 + 0.3 * pulse})`;
       ctx.lineWidth = 2;
       ctx.beginPath(); ctx.arc(c.x, c.y, R, Math.PI * 0.15, Math.PI * 0.85); ctx.stroke();
+    }
+
+    /* =====================================================================
+     * CLASSICAL views — deliberately TRADITIONAL visualisations (no graphs),
+     * so the user can contrast the textbook GR/QM picture with information-first.
+     * ===================================================================== */
+    _classic() {
+      const m = this.mode.slice(8);
+      const fn = {
+        time: '_clTime', space: '_clSpace', circle: '_clCircle', wave: '_clWave',
+        entangle: '_clEntangle', light: '_clLight', mass: '_clMass',
+        gravity: '_clGravity', blackhole: '_clBlackhole', bigbang: '_clBigbang'
+      }[m];
+      if (fn && this[fn]) this[fn]();
+      this._clLabel();
+    }
+
+    _clLabel() {
+      const ctx = this.ctx;
+      ctx.fillStyle = 'rgba(255,180,120,0.85)';
+      ctx.font = '600 11px ui-sans-serif, system-ui, sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText('CLASSICAL VIEW', 26, this.h - 24);
+    }
+    _clText(s, x, y, col, size) {
+      const ctx = this.ctx;
+      ctx.fillStyle = col || 'rgba(200,215,245,0.7)';
+      ctx.font = '300 ' + (size || 13) + 'px Georgia, serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(s, x, y);
+    }
+
+    // Newtonian absolute time: a uniform external timeline + a steady clock.
+    _clTime() {
+      const ctx = this.ctx, cy = this.h * 0.52, x0 = 140, x1 = this.w - 140;
+      ctx.strokeStyle = 'rgba(180,200,255,0.5)'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(x0, cy); ctx.lineTo(x1, cy); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x1, cy); ctx.lineTo(x1 - 12, cy - 6); ctx.lineTo(x1 - 12, cy + 6); ctx.closePath();
+      ctx.fillStyle = 'rgba(180,200,255,0.7)'; ctx.fill();
+      const n = 10;
+      for (let i = 0; i <= n; i++) {
+        const x = x0 + (x1 - x0) * i / n;
+        ctx.strokeStyle = 'rgba(160,180,230,0.4)'; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(x, cy - 6); ctx.lineTo(x, cy + 6); ctx.stroke();
+        this._clText('t=' + i, x, cy + 22, 'rgba(150,170,210,0.5)', 11);
+      }
+      // a particle advancing at a constant rate, the same for all
+      const span = x1 - x0;
+      const px = x0 + ((this.time * 0.06) % span);
+      const gl = ctx.createRadialGradient(px, cy, 0, px, cy, 16);
+      gl.addColorStop(0, 'rgba(124,246,255,0.9)'); gl.addColorStop(1, 'rgba(124,246,255,0)');
+      ctx.fillStyle = gl; ctx.beginPath(); ctx.arc(px, cy, 16, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(px, cy, 4, 0, Math.PI * 2); ctx.fill();
+      // a clock
+      const ccx = this.w / 2, ccy = this.h * 0.3, R = 46;
+      ctx.strokeStyle = 'rgba(180,200,255,0.6)'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(ccx, ccy, R, 0, Math.PI * 2); ctx.stroke();
+      const ang = this.time * 0.002 - Math.PI / 2;
+      ctx.beginPath(); ctx.moveTo(ccx, ccy); ctx.lineTo(ccx + Math.cos(ang) * R * 0.8, ccy + Math.sin(ang) * R * 0.8); ctx.stroke();
+      this._clText('time flows uniformly — an absolute backdrop for all observers', this.w / 2, this.h * 0.7);
+    }
+
+    // Absolute space: a fixed Cartesian coordinate stage.
+    _clSpace() {
+      const ctx = this.ctx, cx = this.w / 2, cy = this.h * 0.48, s = 46;
+      ctx.lineWidth = 1;
+      for (let i = -8; i <= 8; i++) {
+        ctx.strokeStyle = i === 0 ? 'rgba(160,180,230,0.55)' : 'rgba(120,140,190,0.16)';
+        ctx.beginPath(); ctx.moveTo(cx + i * s, cy - 8 * s); ctx.lineTo(cx + i * s, cy + 8 * s); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(cx - 8 * s, cy + i * s); ctx.lineTo(cx + 8 * s, cy + i * s); ctx.stroke();
+      }
+      const objs = [[3, -2, '#7cf6ff'], [-4, 2, '#ff9bd6'], [1, 3, '#ffd27c']];
+      for (const [ox, oy, col] of objs) {
+        const x = cx + ox * s, y = cy - oy * s;
+        const gl = ctx.createRadialGradient(x, y, 0, x, y, 18);
+        gl.addColorStop(0, this._rgba(col, 0.9)); gl.addColorStop(1, this._rgba(col, 0));
+        ctx.fillStyle = gl; ctx.beginPath(); ctx.arc(x, y, 18, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = col; ctx.beginPath(); ctx.arc(x, y, 5, 0, Math.PI * 2); ctx.fill();
+        this._clText('(' + ox + ',' + (oy) + ')', x, y - 16, 'rgba(200,215,245,0.6)', 11);
+      }
+      this._clText('space is a fixed stage; every object has absolute coordinates', this.w / 2, this.h * 0.9);
+    }
+
+    // Euclidean circle: π is simply given.
+    _clCircle() {
+      const ctx = this.ctx, cx = this.w / 2, cy = this.h * 0.46, R = Math.min(this.w, this.h) * 0.22;
+      const gl = ctx.createRadialGradient(cx, cy, R * 0.9, cx, cy, R * 1.15);
+      gl.addColorStop(0, 'rgba(124,246,255,0)'); gl.addColorStop(0.7, 'rgba(124,246,255,0.18)'); gl.addColorStop(1, 'rgba(124,246,255,0)');
+      ctx.fillStyle = gl; ctx.beginPath(); ctx.arc(cx, cy, R * 1.15, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = 'rgba(124,246,255,0.95)'; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.stroke();
+      const ang = this.time * 0.0012;
+      ctx.strokeStyle = 'rgba(255,210,124,0.8)'; ctx.lineWidth = 1.6;
+      ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + Math.cos(ang) * R, cy + Math.sin(ang) * R); ctx.stroke();
+      ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(cx, cy, 3, 0, Math.PI * 2); ctx.fill();
+      this._clText('r', cx + Math.cos(ang) * R * 0.5, cy + Math.sin(ang) * R * 0.5 - 8, 'rgba(255,210,124,0.9)', 14);
+      this._clText('a perfect continuous circle:  C = 2πr,  A = πr²   —   π is a given constant', this.w / 2, cy + R + 56);
+    }
+
+    // QM wave packet evolving by the Schrödinger equation.
+    _clWave() {
+      const ctx = this.ctx, cy = this.h * 0.52, x0 = 120, x1 = this.w - 120, W = x1 - x0;
+      ctx.strokeStyle = 'rgba(120,140,190,0.3)'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(x0, cy); ctx.lineTo(x1, cy); ctx.stroke();
+      const period = 7000, ph = (this.time % period) / period;
+      const x0c = 0.5 + 0.35 * Math.sin(ph * Math.PI * 2);   // packet center (0..1)
+      const sig = 0.05 + 0.06 * (0.5 - 0.5 * Math.cos(ph * Math.PI * 2)); // spreads
+      const amp = this.h * 0.16;
+      // |ψ| envelope
+      ctx.beginPath();
+      for (let i = 0; i <= 200; i++) {
+        const u = i / 200, x = x0 + u * W;
+        const env = Math.exp(-((u - x0c) * (u - x0c)) / (2 * sig * sig));
+        const y = cy - env * amp;
+        i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+      }
+      ctx.strokeStyle = 'rgba(185,155,255,0.5)'; ctx.lineWidth = 1.5; ctx.stroke();
+      // Re(ψ) oscillation under the envelope
+      ctx.beginPath();
+      for (let i = 0; i <= 240; i++) {
+        const u = i / 240, x = x0 + u * W;
+        const env = Math.exp(-((u - x0c) * (u - x0c)) / (2 * sig * sig));
+        const y = cy - env * amp * Math.cos(60 * (u - x0c) - this.time * 0.006);
+        i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+      }
+      ctx.strokeStyle = 'rgba(124,246,255,0.85)'; ctx.lineWidth = 2; ctx.stroke();
+      this._clText('ψ(x,t) evolves continuously in time (Schrödinger);  measurement collapses it', this.w / 2, this.h * 0.84);
+    }
+
+    // QM entanglement: a separating Bell pair with anti-correlated spins.
+    _clEntangle() {
+      const ctx = this.ctx, cy = this.h * 0.46, cx = this.w / 2;
+      const period = 6000, ph = (this.time % period) / period;
+      const sep = 80 + ph * (this.w * 0.32);
+      const measured = ph > 0.6;
+      const flip = (this.time / period | 0) % 2 === 0 ? 1 : -1;
+      // correlation line
+      ctx.strokeStyle = 'rgba(255,155,214,0.3)'; ctx.setLineDash([5, 7]); ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(cx - sep, cy); ctx.lineTo(cx + sep, cy); ctx.stroke(); ctx.setLineDash([]);
+      const drawP = (x, dir, col) => {
+        const gl = ctx.createRadialGradient(x, cy, 0, x, cy, 20);
+        gl.addColorStop(0, this._rgba(col, 0.9)); gl.addColorStop(1, this._rgba(col, 0));
+        ctx.fillStyle = gl; ctx.beginPath(); ctx.arc(x, cy, 20, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = col; ctx.beginPath(); ctx.arc(x, cy, 7, 0, Math.PI * 2); ctx.fill();
+        // spin arrow (undetermined = spinning; measured = locked)
+        const a = measured ? (dir > 0 ? -Math.PI / 2 : Math.PI / 2) : this.time * 0.01 * dir;
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(x, cy); ctx.lineTo(x + Math.cos(a) * 16, cy + Math.sin(a) * 16); ctx.stroke();
+      };
+      drawP(cx - sep, flip, '#7cf6ff');
+      drawP(cx + sep, -flip, '#ff9bd6');
+      this._clText(measured ? 'measured: spins anti-correlated — "spooky action at a distance"'
+                            : 'an entangled pair flies apart through space…', this.w / 2, this.h * 0.8);
+    }
+
+    // SR light cone: a photon worldline with ds² = 0, dτ = 0.
+    _clLight() {
+      const ctx = this.ctx, cx = this.w / 2, oy = this.h * 0.8, H = this.h * 0.62;
+      // axes
+      ctx.strokeStyle = 'rgba(160,180,230,0.5)'; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(cx, oy); ctx.lineTo(cx, oy - H); ctx.stroke();       // ct
+      ctx.beginPath(); ctx.moveTo(cx - this.w * 0.32, oy); ctx.lineTo(cx + this.w * 0.32, oy); ctx.stroke(); // x
+      this._clText('ct', cx + 14, oy - H + 6, 'rgba(160,180,230,0.7)', 12);
+      this._clText('x', cx + this.w * 0.32 - 6, oy + 18, 'rgba(160,180,230,0.7)', 12);
+      // light cone (45°)
+      ctx.strokeStyle = 'rgba(255,210,124,0.5)'; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(cx, oy); ctx.lineTo(cx + H, oy - H); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(cx, oy); ctx.lineTo(cx - H, oy - H); ctx.stroke();
+      const cg = ctx.createLinearGradient(cx, oy, cx, oy - H);
+      cg.addColorStop(0, 'rgba(255,210,124,0.10)'); cg.addColorStop(1, 'rgba(255,210,124,0)');
+      ctx.fillStyle = cg; ctx.beginPath(); ctx.moveTo(cx, oy); ctx.lineTo(cx + H, oy - H); ctx.lineTo(cx - H, oy - H); ctx.closePath(); ctx.fill();
+      // a photon traveling up the 45° null line
+      const t = (this.time * 0.05) % H;
+      const px = cx + t, py = oy - t;
+      const gl = ctx.createRadialGradient(px, py, 0, px, py, 14);
+      gl.addColorStop(0, 'rgba(255,235,150,0.95)'); gl.addColorStop(1, 'rgba(255,235,150,0)');
+      ctx.fillStyle = gl; ctx.beginPath(); ctx.arc(px, py, 14, 0, Math.PI * 2); ctx.fill();
+      // a timelike worldline for contrast
+      ctx.strokeStyle = 'rgba(124,246,255,0.7)'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(cx, oy); ctx.lineTo(cx + H * 0.35, oy - H); ctx.stroke();
+      this._clText('photon on the null cone:  ds² = 0  ⇒  proper time dτ = 0', this.w / 2, this.h * 0.12);
+      this._clText('massive worldline (cyan) vs light (gold)', this.w / 2, this.h * 0.17, 'rgba(150,170,210,0.5)', 11);
+    }
+
+    // Classical mass: a quantity of matter / energy.
+    _clMass() {
+      const ctx = this.ctx, cx = this.w / 2, cy = this.h * 0.46, R = Math.min(this.w, this.h) * 0.16;
+      const gl = ctx.createRadialGradient(cx - R * 0.3, cy - R * 0.3, R * 0.1, cx, cy, R);
+      gl.addColorStop(0, 'rgba(255,240,210,0.95)'); gl.addColorStop(0.5, 'rgba(255,200,120,0.8)'); gl.addColorStop(1, 'rgba(150,90,40,0.2)');
+      ctx.fillStyle = gl; ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.fill();
+      this._clText('M', cx, cy + 6, 'rgba(60,30,10,0.85)', 28);
+      this._clText('mass = a quantity of matter/energy:  E = mc²', this.w / 2, cy + R + 50);
+    }
+
+    // GR gravity well: the rubber-sheet embedding diagram + an orbiting body.
+    _clGravity(deep) {
+      const ctx = this.ctx, cx = this.w / 2, cy = this.h * 0.4;
+      const maxR = Math.min(this.w, this.h) * 0.42;
+      const wellDepth = deep ? this.h * 0.5 : this.h * 0.26;
+      const depthAt = rr => {
+        const x = rr / maxR;
+        return wellDepth / (x * (deep ? 2.2 : 3.0) + (deep ? 0.10 : 0.22));
+      };
+      // concentric rings sagging toward the centre (the sheet)
+      const rings = 11;
+      for (let i = rings; i >= 1; i--) {
+        const rr = maxR * i / rings;
+        const dy = depthAt(rr);
+        ctx.strokeStyle = `rgba(124,180,255,${0.07 + 0.16 * (i / rings)})`;
+        ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.ellipse(cx, cy + dy * 0.0, rr, rr * 0.42, 0, 0, Math.PI * 2); ctx.stroke();
+      }
+      // radial mesh lines dipping into the well
+      for (let a = 0; a < Math.PI * 2; a += Math.PI / 8) {
+        ctx.beginPath();
+        for (let i = 0; i <= rings; i++) {
+          const rr = maxR * i / rings;
+          const dy = i === 0 ? wellDepth : (wellDepth - depthAt(rr));
+          const x = cx + Math.cos(a) * rr, y = cy + Math.sin(a) * rr * 0.42 + dy;
+          i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+        }
+        ctx.strokeStyle = 'rgba(124,180,255,0.10)'; ctx.lineWidth = 1; ctx.stroke();
+      }
+      // central mass at the bottom of the well
+      const my = cy + wellDepth * 0.92;
+      const mr = deep ? 6 : 20;
+      if (!deep) {
+        const mg = ctx.createRadialGradient(cx, my, 0, cx, my, mr * 2);
+        mg.addColorStop(0, 'rgba(255,220,150,0.95)'); mg.addColorStop(1, 'rgba(255,180,90,0)');
+        ctx.fillStyle = mg; ctx.beginPath(); ctx.arc(cx, my, mr * 2, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#ffd27c'; ctx.beginPath(); ctx.arc(cx, my, mr, 0, Math.PI * 2); ctx.fill();
+      }
+      // an orbiting test particle on the rim
+      const a = this.time * 0.0016;
+      const orr = maxR * 0.6, ody = wellDepth - depthAt(orr);
+      const ox = cx + Math.cos(a) * orr, oyp = cy + Math.sin(a) * orr * 0.42 + ody;
+      const og = ctx.createRadialGradient(ox, oyp, 0, ox, oyp, 10);
+      og.addColorStop(0, 'rgba(124,246,255,0.95)'); og.addColorStop(1, 'rgba(124,246,255,0)');
+      ctx.fillStyle = og; ctx.beginPath(); ctx.arc(ox, oyp, 10, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(ox, oyp, 3, 0, Math.PI * 2); ctx.fill();
+      if (!deep) this._clText('mass curves spacetime; free-fall follows the geodesics it bends', this.w / 2, this.h * 0.9);
+      return { cx, cy, my, wellDepth };
+    }
+
+    // GR black hole: a bottomless funnel with a Schwarzschild horizon + disk.
+    _clBlackhole() {
+      const g = this._clGravity(true);
+      const ctx = this.ctx, cx = g.cx, cy = g.cy;
+      // accretion disk
+      ctx.save();
+      for (let i = 0; i < 3; i++) {
+        ctx.strokeStyle = `rgba(255,${160 - i * 30},${80 - i * 20},${0.4 - i * 0.1})`;
+        ctx.lineWidth = 6 - i * 1.5;
+        ctx.beginPath(); ctx.ellipse(cx, cy, 120 - i * 8, 50 - i * 4, 0, 0, Math.PI * 2); ctx.stroke();
+      }
+      ctx.restore();
+      // event horizon (black disk + bright ring)
+      const hr = 46;
+      ctx.fillStyle = '#000';
+      ctx.beginPath(); ctx.ellipse(cx, cy, hr, hr * 0.7, 0, 0, Math.PI * 2); ctx.fill();
+      const pulse = 0.6 + 0.4 * Math.sin(this.time * 0.003);
+      ctx.strokeStyle = `rgba(255,170,90,${0.8 * pulse})`; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.ellipse(cx, cy, hr, hr * 0.7, 0, 0, Math.PI * 2); ctx.stroke();
+      this._clText('Schwarzschild black hole:  event horizon at  r_s = 2GM/c²', this.w / 2, this.h * 0.92);
+    }
+
+    // Expanding-universe cosmology from a singularity.
+    _clBigbang() {
+      const ctx = this.ctx, cx = this.w / 2, cy = this.h * 0.46;
+      const period = 9000, ph = (this.time % period) / period;
+      // expanding shells
+      for (let i = 0; i < 5; i++) {
+        const rr = ((ph + i / 5) % 1) * Math.min(this.w, this.h) * 0.46;
+        ctx.strokeStyle = `rgba(255,${180 - i * 10},${120 - i * 10},${0.4 * (1 - rr / (Math.min(this.w, this.h) * 0.46))})`;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.arc(cx, cy, rr + 4, 0, Math.PI * 2); ctx.stroke();
+      }
+      // galaxies flying outward (redshifting)
+      if (!this._galx) {
+        this._galx = [];
+        for (let i = 0; i < 60; i++) this._galx.push({ a: Math.random() * Math.PI * 2, r: Math.random(), s: 0.4 + Math.random() * 0.8 });
+      }
+      const maxR = Math.min(this.w, this.h) * 0.46;
+      for (const gx of this._galx) {
+        const rr = ((gx.r + ph * gx.s) % 1) * maxR;
+        const x = cx + Math.cos(gx.a) * rr, y = cy + Math.sin(gx.a) * rr;
+        const red = rr / maxR;
+        ctx.fillStyle = `rgba(${200 + red * 55},${200 - red * 120},${255 - red * 180},${0.8 * (1 - red * 0.6)})`;
+        ctx.beginPath(); ctx.arc(x, y, 2 + (1 - red) * 1.5, 0, Math.PI * 2); ctx.fill();
+      }
+      const core = ctx.createRadialGradient(cx, cy, 0, cx, cy, 30);
+      core.addColorStop(0, 'rgba(255,245,220,0.9)'); core.addColorStop(1, 'rgba(255,200,120,0)');
+      ctx.fillStyle = core; ctx.beginPath(); ctx.arc(cx, cy, 30, 0, Math.PI * 2); ctx.fill();
+      this._clText('space itself expands from an initial singularity (t ≈ 13.8 Gyr ago)', this.w / 2, this.h * 0.92);
     }
 
     _rgba(hex, a) {

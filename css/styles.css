@@ -118,6 +118,23 @@ body {
 .body { font-size: 14px; line-height: 1.62; color: #c8d4ee; margin: 0 0 10px; }
 .body b { color: #fff; } .body em { color: var(--cyan); font-style: italic; }
 
+/* ---------- view toggle (Information First ⇄ Classical) ---------- */
+.view-toggle {
+  display: flex; gap: 0; margin: 4px 0 12px;
+  border: 1px solid var(--panel-border); border-radius: 10px; overflow: hidden;
+  background: rgba(0, 0, 0, 0.25);
+}
+.view-toggle[hidden] { display: none; }
+.vt-btn {
+  flex: 1; padding: 8px 10px; cursor: pointer;
+  background: transparent; border: none; color: var(--muted);
+  font-size: 11.5px; letter-spacing: .4px; transition: all .15s ease;
+}
+.vt-btn:first-child { border-right: 1px solid var(--panel-border); }
+.vt-btn:hover { color: var(--text); background: rgba(124, 246, 255, 0.06); }
+.vt-btn.active { background: rgba(124, 246, 255, 0.16); color: var(--cyan); font-weight: 600; }
+.vt-btn[data-view="classic"].active { background: rgba(255, 180, 120, 0.16); color: var(--amber); }
+
 /* ---------- stage controls ---------- */
 .stage-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; min-height: 0; margin-bottom: 8px; }
 .stage-controls:empty { display: none; }
