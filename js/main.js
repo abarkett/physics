@@ -11,7 +11,7 @@
   const App = {
     graph: null, layout: null, renderer: null,
     stageIndex: 0, playing: true, sandbox: false, classicView: false,
-    _closureN: 6, _G: 60, _entPair: null, _extN: 14,
+    _closureN: 6, _G: 60, _entPair: null,
     _last: 0, _drag: null,
 
     init() {
@@ -133,7 +133,6 @@
         measure: 'Tip: drag a ψ node — the bridge stays a 1-hop throat. Click ψ to measure.',
         'field-reset': 'Tip: press Reset to release the fanout again from scratch.',
         scramble: 'Tip: press Scramble — the connections rebuild space from chaos.',
-        extent: 'Tip: use ＋ / － to change the outer ring’s informational extent.',
         collapse: 'Tip: add internal links / nodes until the core collapses into a black hole.'
       };
       this.el.hint.textContent = this.sandbox
@@ -163,16 +162,6 @@
       }
       if (s.interactive === 'scramble') {
         this._addButton(c, '⤮ Scramble', () => this._scramble());
-      }
-      if (s.interactive === 'extent') {
-        const refresh = () => {
-          s.build(this);
-          const lab = document.getElementById('extLabel');
-          if (lab) lab.textContent = 'extent = ' + this._extN;
-        };
-        this._addButton(c, '－', () => { this._extN = Math.max(4, (this._extN || 14) - 2); refresh(); });
-        this._addLabel(c, 'extent = ' + (this._extN || 14), 'extLabel');
-        this._addButton(c, '＋', () => { this._extN = Math.min(40, (this._extN || 14) + 2); refresh(); });
       }
       if (s.interactive === 'field-reset') {
         this._addButton(c, '↺ Reset fanout', () => s.build(this));
@@ -372,9 +361,6 @@
           case 'rot-info': add('Info from rotation', '0 bits', 'ring maps onto itself'); break;
           case 'ring-symmetry': add('Ring symmetry', 'C' + (this._symN || 8), 'rotational invariance'); break;
           case 'space-state': add('Space (the grid)', 'unchanged', 'rotation adds nothing'); break;
-          case 'sym-both': add('Symmetry type', 'rotational', 'identical for both rings'); break;
-          case 'extent-inner': add('Inner reach', (this._extInner ? this._extInner.length : 6) + ' states', 'small radius'); break;
-          case 'extent-outer': add('Outer reach', (this._extOuter ? this._extOuter.length : this._extN) + ' states', 'large radius'); break;
           case 'radius': add('Informational reach', g.nodes.length + ' states', 'encompassed by the loop'); break;
           case 'closure': {
             const n = g.nodes.length;

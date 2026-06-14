@@ -40,9 +40,8 @@ informational universe and watch the metrics emerge.
 | 3 | **Adjacency → distance** | `A—B—C`. *Informational* distance = Σ(1/connectivity). |
 | 4 | **Time** | A simultaneous **fanout** with one **observer slice** riding it; the slice's count of ordered differences is the **clock**. |
 | 6 | **Adjacency before space** | A scrambled lattice **reconstructs 2-D space from connectivity alone** (press Scramble); colour = pure graph distance. |
-| 7 | **Symmetry → shape** | A symmetric ring **rotates** within that space — mapping onto itself, **0 new bits**, space unchanged. |
-| 8 | **Radius & extent** | Two rings, same rotational symmetry, different **reach** — radius is informational extent. |
-| 9 | **π & closure** | A closed loop's `n·sin(π/n)` visibly converges to π as you add states. |
+| 7 | **Symmetry → shape** | A symmetric ring **rotates** within that space — mapping onto itself, **adds 0 bits**, space unchanged. |
+| 8·9 | **Radius, closure & π** | One growing loop: symmetry type fixed, **extent (radius)** grows, and `n·sin(π/n)` converges to π. |
 | 4·10 | **Projection / wavefunction** | A static sphere, viewed edge-on, slices to a **point→line→point** segment that fakes "time" (Flatland). |
 | 12 | **Entanglement** | Hidden adjacency drawn as a higher-dimensional **bridge**: short 1-hop throat however far you drag the mouths apart. |
 | 15 | **Light** | Two observers; along a **symmetry direction** (indistinguishable states) the clock never ticks → no proper time. |

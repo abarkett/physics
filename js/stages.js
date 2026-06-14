@@ -207,46 +207,16 @@
         }
       }
     },
-    /* 6b -- radius / informational extent -------------------------------- */
+    /* 7 -- radius, closure & π (combined) -------------------------------- */
     {
-      chapter: '8', title: 'Radius & Informational Extent', kicker: 'Same Symmetry, Different Reach',
-      body: `Two rings, both perfectly rotationally symmetric — yet plainly different. Symmetry can't be the difference; ` +
-            `<em>both possess it equally.</em> What differs is <b>informational extent</b>: how many states, how much connectivity, ` +
-            `the loop encompasses. <b>That</b> is what radius really measures — <em>reach</em>, before it is ever a length. ` +
-            `Use <b>＋ / －</b> to grow the outer ring's extent; its symmetry type never changes.`,
-      mode: 'graph', interactive: 'extent',
-      metrics: ['sym-both', 'extent-inner', 'extent-outer'],
-      build(app) {
-        const g = app.graph; g.clear(); app.renderer.flow = true;
-        const inN = 6, outN = app._extN || 14, inR = 95, outR = 215;
-        const inner = [], outer = [];
-        for (let i = 0; i < inN; i++) { const a = (i / inN) * Math.PI * 2 - Math.PI / 2; inner.push(g.addNode({ x: Math.cos(a) * inR, y: Math.sin(a) * inR, group: 1, pinned: true }).id); }
-        for (let i = 0; i < outN; i++) { const a = (i / outN) * Math.PI * 2 - Math.PI / 2; outer.push(g.addNode({ x: Math.cos(a) * outR, y: Math.sin(a) * outR, group: 3, pinned: true }).id); }
-        for (let i = 0; i < inN; i++) g.addEdge(inner[i], inner[(i + 1) % inN], 1);
-        for (let i = 0; i < outN; i++) g.addEdge(outer[i], outer[(i + 1) % outN], 1);
-        app._extInner = inner; app._extOuter = outer; app._extInR = inR; app._extOutR = outR; app._extN = outN;
-        app.renderer.extra.guides = [
-          { type: 'circle', x: 0, y: 0, r: inR, label: 'reach: ' + inN + ' states' },
-          { type: 'circle', x: 0, y: 0, r: outR, label: 'reach: ' + outN + ' states' }
-        ];
-        app.renderer.setCamera(0, 0, 0.92);
-      },
-      update(app) {
-        const ang = app.renderer.time * 0.0005;
-        const rot = (ids, R, dir) => { const n = ids.length; for (let i = 0; i < n; i++) { const a = (i / n) * Math.PI * 2 - Math.PI / 2 + ang * dir, node = app.graph.get(ids[i]); if (node) { node.x = Math.cos(a) * R; node.y = Math.sin(a) * R; } } };
-        if (app._extInner) rot(app._extInner, app._extInR, 1);
-        if (app._extOuter) rot(app._extOuter, app._extOutR, -1);
-      }
-    },
-    /* 7 -- pi / closure --------------------------------------------------- */
-    {
-      chapter: '9', title: 'π and Informational Closure', kicker: 'An Invariant Revealed',
-      body: `Whenever informational relations form a complete symmetric loop, π appears. For a closed loop of <b>n</b> ` +
-            `states, perimeter ÷ diameter = <b>n · sin(π/n)</b>. Press <b>＋</b> and watch this <em>closure invariant</em> ` +
-            `climb toward 3.14159… Geometry <em>reveals</em> π; it does not manufacture it. The same invariant governs ` +
-            `circles, standing waves, and quantum phase.`,
+      chapter: '8 · 9', title: 'Radius, Closure & π', kicker: 'Extent, and the Invariant of Closure',
+      body: `One closed symmetric loop of <b>n</b> states. Press <b>＋ / －</b> and notice two things. Its <em>symmetry type</em> ` +
+            `never changes — every such loop is rotationally symmetric — so the only thing that grows is its <b>informational ` +
+            `extent</b>: the radius is how much connectivity the loop encompasses, <em>reach before it is ever a length</em>. ` +
+            `And as the loop closes more finely, a deeper invariant surfaces: perimeter ÷ diameter = <b>n · sin(π/n)</b>, climbing ` +
+            `toward 3.14159… <em>π is the invariant of informational closure</em> — geometry reveals it; it does not manufacture it.`,
       mode: 'closure', interactive: 'closure-n',
-      metrics: ['states', 'closure', 'pi-error'],
+      metrics: ['symmetry', 'radius', 'closure', 'pi-error'],
       build(app) {
         ring(app, app._closureN || 6, 0);
         app.renderer.flow = true;
@@ -540,17 +510,12 @@
             `is a property it simply <em>has</em>. Shape is given; it does not emerge from informational invariance.`,
       readout: [{ k: 'Object', v: 'circle', sub: 'continuous, primitive' }, { k: 'Symmetry', v: 'O(2)', sub: 'a given property' }]
     },
-    'Radius & Informational Extent': {
+    'Radius, Closure & π': {
       badge: 'Euclidean geometry', mode: 'classic-circle',
-      body: `Classically, <b>radius is just a length</b> — a number of metres from the centre, read off pre-existing space. ` +
-            `It has nothing to do with information or how much structure a region contains; the circle and its radius are simply given.`,
-      readout: [{ k: 'Radius', v: 'r', sub: 'a length in given space' }, { k: 'Symmetry', v: 'O(2)', sub: 'independent of r' }]
-    },
-    'π and Informational Closure': {
-      badge: 'Euclidean geometry', mode: 'classic-circle',
-      body: `Classically <b>π is just the ratio</b> of a circle's circumference to its diameter — a fixed constant of continuous ` +
-            `geometry, <em>C = 2πr</em>, taken as given rather than emerging from closure of a discrete structure.`,
-      readout: [{ k: 'π', v: '3.14159…', sub: 'a given constant' }, { k: 'Circle', v: 'C = 2πr', sub: 'exact, continuous' }]
+      body: `Classically a circle is a continuous primitive: its <b>radius is just a length</b> read off pre-existing space, and ` +
+            `<b>π is simply the given ratio</b> of circumference to diameter (<em>C = 2πr</em>). Neither has anything to do with ` +
+            `information or with a structure closing on itself — both are taken as given.`,
+      readout: [{ k: 'Radius', v: 'r', sub: 'a length in given space' }, { k: 'π', v: '3.14159…', sub: 'a given constant' }]
     },
     'Projection & the Wavefunction': {
       badge: 'Quantum Mechanics', mode: 'classic-wave',
