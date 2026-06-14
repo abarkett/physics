@@ -158,6 +158,7 @@
 
       if (this.observers.length) { if (live) this._stepObservers(dt); this._drawObservers(); }
 
+      if (this.extra.guides) this._drawGuides();
       this._drawNodes(fieldMode);
 
       if (this.mode === 'closure') this._closureOverlay();
@@ -249,7 +250,7 @@
         // but kept restrained so the underlying paths/loops stay legible.
         const a = fieldMode ? (this.amp.get(n.id) || 0) : 0;
         const r = (n.r + Math.min(deg, 8) * 1.1) * this.cam.zoom * eased * (1 + a * 0.45);
-        let col = PALETTE[n.group % PALETTE.length];
+        let col = n.tint || PALETTE[n.group % PALETTE.length];
         if (n.tag === 'singularity') col = '#ffffff';
         if (n.state === 1) col = '#ffd27c';
 
@@ -274,6 +275,29 @@
           ctx.font = `600 ${Math.round(13)}px ui-sans-serif, system-ui, sans-serif`;
           ctx.textAlign = 'center';
           ctx.fillText(n.label, p.x, p.y - r - 8);
+        }
+      }
+    }
+
+    /* Faint "space" guides (e.g. the unchanging footprint of a symmetric object). */
+    _drawGuides() {
+      const ctx = this.ctx;
+      for (const gd of this.extra.guides) {
+        if (gd.type === 'circle') {
+          const c = this.worldToScreen(gd.x, gd.y);
+          const Rp = gd.r * this.cam.zoom;
+          ctx.save();
+          ctx.setLineDash([4, 8]);
+          ctx.strokeStyle = gd.color || 'rgba(124,246,255,0.22)';
+          ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.arc(c.x, c.y, Rp, 0, Math.PI * 2); ctx.stroke();
+          ctx.restore();
+          if (gd.label) {
+            ctx.fillStyle = 'rgba(150,170,210,0.5)';
+            ctx.font = '300 11px Georgia, serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(gd.label, c.x, c.y - Rp - 8);
+          }
         }
       }
     }

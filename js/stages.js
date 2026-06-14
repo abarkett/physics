@@ -42,6 +42,15 @@
     return ids;
   }
 
+  // Map t∈[0,1] to a hex colour along a cyan→magenta gradient (graph-distance shells).
+  function hslHex(t) {
+    const h = (190 + t * 150) / 360, s = 0.75, l = 0.62;
+    const q = l < 0.5 ? l * (1 + s) : l + s - l * s, p = 2 * l - q;
+    const f = x => { if (x < 0) x += 1; if (x > 1) x -= 1; if (x < 1 / 6) return p + (q - p) * 6 * x; if (x < 1 / 2) return q; if (x < 2 / 3) return p + (q - p) * (2 / 3 - x) * 6; return p; };
+    const hx = v => ('0' + Math.round(v * 255).toString(16)).slice(-2);
+    return '#' + hx(f(h + 1 / 3)) + hx(f(h)) + hx(f(h - 1 / 3));
+  }
+
   const STAGES = [
     /* 0 ------------------------------------------------------------------- */
     {
@@ -125,36 +134,94 @@
         app.renderer.setCamera(0, 0, 1.1);
       }
     },
-    /* 5 -- adjacency before space ---------------------------------------- */
+    /* 5 -- adjacency before space (a lattice reconstructs 2-D space) ------- */
     {
       chapter: '6', title: 'Adjacency before Space', kicker: 'The Map and the Territory',
-      body: `Space is not fundamental — adjacency is. These positions carry no built-in meaning: they are ` +
-            `continuously re-derived from the connectivity matrix by attraction and repulsion. ` +
-            `<em>Connectivity is the territory; the layout you see is merely a map.</em> Drag a node — the geometry re-forms to honour the relationships.`,
-      mode: 'graph', interactive: 'drag',
-      metrics: ['states', 'edges', 'loops', 'components'],
+      body: `Here is the claim made literal. This lattice has <b>no built-in positions</b> — only a record of which states are ` +
+            `<em>adjacent</em>. Press <b>Scramble</b> and the connections alone pull it back into a coherent 2-D space. The colour is ` +
+            `pure <em>graph distance</em> from one corner, yet it settles into neat spatial shells: <b>near in connections becomes ` +
+            `near in space.</b> Adjacency is the territory; space is only the map it draws.`,
+      mode: 'graph', interactive: 'scramble',
+      metrics: ['states', 'edges', 'dim'],
       build(app) {
-        const g = app.graph; g.clear(); app.renderer.flow = true;
-        // A small irregular network so the emergent layout is non-obvious.
-        const ids = [];
-        for (let i = 0; i < 12; i++) ids.push(g.addNode({ group: i % 6 }).id);
-        const links = [[0,1],[1,2],[2,0],[2,3],[3,4],[4,5],[5,3],[5,6],[6,7],[7,8],[8,6],[8,9],[9,10],[10,11],[11,9],[1,6],[4,9]];
-        for (const [a, b] of links) g.addEdge(ids[a], ids[b], 1);
-        app.renderer.setCamera(0, 0, 1);
+        const g = app.graph; g.clear(); app.renderer.flow = true; app.renderer.extra.guides = null;
+        const W = 6, H = 6, ids = [];
+        for (let i = 0; i < W; i++) for (let j = 0; j < H; j++)
+          ids.push(g.addNode({ x: (Math.random() - 0.5) * 520, y: (Math.random() - 0.5) * 520 }).id);
+        const at = (i, j) => ids[i * H + j];
+        for (let i = 0; i < W; i++) for (let j = 0; j < H; j++) {
+          if (i < W - 1) g.addEdge(at(i, j), at(i + 1, j), 1);
+          if (j < H - 1) g.addEdge(at(i, j), at(i, j + 1), 1);
+        }
+        // tint each node by its graph distance (hops) from the corner
+        const origin = at(0, 0);
+        let maxd = 1; const dist = {};
+        for (const id of ids) { const d = g.informationalDistance(origin, id) || 0; dist[id] = d; if (d > maxd) maxd = d; }
+        for (const id of ids) g.get(id).tint = hslHex(dist[id] / maxd);
+        app._lattice = ids;
+        app.renderer.setCamera(0, 0, 0.82);
       }
     },
-    /* 6 -- symmetry / sphere --------------------------------------------- */
+    /* 6 -- symmetry: rotation creates no new information ------------------ */
     {
-      chapter: '7', title: 'Symmetry projects as Shape', kicker: 'Invariance made Visible',
-      body: `A ring is special because rotating it creates no new information — every direction is equivalent. ` +
-            `We usually say "the circle has symmetry." Invert it: <em>symmetry projects as a circle.</em> ` +
-            `Shapes are informational invariances made visible. Use <b>＋ / －</b> to change how much connectivity the symmetric loop encompasses — its <em>radius</em> is informational reach.`,
-      mode: 'graph', interactive: 'closure-n',
-      metrics: ['states', 'symmetry', 'radius'],
+      chapter: '7', title: 'Symmetry projects as Shape', kicker: 'Rotation creates no Information',
+      body: `Now place a <b>symmetric object</b> into that space — a ring — and watch it <b>rotate</b>. Because every state is ` +
+            `equivalent, rotation maps the structure exactly onto itself: the set of adjacencies never changes, so <b>0 new bits</b> ` +
+            `are created and the space (the dashed footprint) is <em>unchanged</em>. The amber marker only lets you <em>see</em> the ` +
+            `motion; the pure symmetric object would be undetectable. <em>That invariance is what we call "the circle's symmetry."</em>`,
+      mode: 'graph',
+      metrics: ['symmetry', 'rot-info', 'distinct-configs'],
       build(app) {
-        ring(app, app._closureN || 8, 1);
-        app.renderer.flow = true;
-        app.renderer.setCamera(0, 0, 1.2);
+        const g = app.graph; g.clear(); app.renderer.flow = true;
+        const n = 8, R = 150, ids = [];
+        for (let i = 0; i < n; i++) {
+          const a = (i / n) * Math.PI * 2 - Math.PI / 2;
+          ids.push(g.addNode({ x: Math.cos(a) * R, y: Math.sin(a) * R, group: 1, pinned: true }).id);
+        }
+        for (let i = 0; i < n; i++) g.addEdge(ids[i], ids[(i + 1) % n], 1);
+        g.get(ids[0]).tint = '#ffd27c';                 // the visible marker
+        app._symIds = ids; app._symN = n; app._symR = R;
+        app.renderer.extra.guides = [{ type: 'circle', x: 0, y: 0, r: R, label: 'space (connectivity) — unchanged' }];
+        app.renderer.setCamera(0, 0, 1.1);
+      },
+      update(app) {
+        const ids = app._symIds; if (!ids) return;
+        const n = app._symN, R = app._symR, ang = app.renderer.time * 0.0006;
+        for (let i = 0; i < n; i++) {
+          const a = (i / n) * Math.PI * 2 - Math.PI / 2 + ang, node = app.graph.get(ids[i]);
+          if (node) { node.x = Math.cos(a) * R; node.y = Math.sin(a) * R; }
+        }
+      }
+    },
+    /* 6b -- radius / informational extent -------------------------------- */
+    {
+      chapter: '8', title: 'Radius & Informational Extent', kicker: 'Same Symmetry, Different Reach',
+      body: `Two rings, both perfectly rotationally symmetric — yet plainly different. Symmetry can't be the difference; ` +
+            `<em>both possess it equally.</em> What differs is <b>informational extent</b>: how many states, how much connectivity, ` +
+            `the loop encompasses. <b>That</b> is what radius really measures — <em>reach</em>, before it is ever a length. ` +
+            `Use <b>＋ / －</b> to grow the outer ring's extent; its symmetry type never changes.`,
+      mode: 'graph', interactive: 'extent',
+      metrics: ['sym-both', 'extent-inner', 'extent-outer'],
+      build(app) {
+        const g = app.graph; g.clear(); app.renderer.flow = true;
+        const inN = 6, outN = app._extN || 14, inR = 95, outR = 215;
+        const inner = [], outer = [];
+        for (let i = 0; i < inN; i++) { const a = (i / inN) * Math.PI * 2 - Math.PI / 2; inner.push(g.addNode({ x: Math.cos(a) * inR, y: Math.sin(a) * inR, group: 1, pinned: true }).id); }
+        for (let i = 0; i < outN; i++) { const a = (i / outN) * Math.PI * 2 - Math.PI / 2; outer.push(g.addNode({ x: Math.cos(a) * outR, y: Math.sin(a) * outR, group: 3, pinned: true }).id); }
+        for (let i = 0; i < inN; i++) g.addEdge(inner[i], inner[(i + 1) % inN], 1);
+        for (let i = 0; i < outN; i++) g.addEdge(outer[i], outer[(i + 1) % outN], 1);
+        app._extInner = inner; app._extOuter = outer; app._extInR = inR; app._extOutR = outR; app._extN = outN;
+        app.renderer.extra.guides = [
+          { type: 'circle', x: 0, y: 0, r: inR, label: 'reach: ' + inN + ' states' },
+          { type: 'circle', x: 0, y: 0, r: outR, label: 'reach: ' + outN + ' states' }
+        ];
+        app.renderer.setCamera(0, 0, 0.92);
+      },
+      update(app) {
+        const ang = app.renderer.time * 0.0005;
+        const rot = (ids, R, dir) => { const n = ids.length; for (let i = 0; i < n; i++) { const a = (i / n) * Math.PI * 2 - Math.PI / 2 + ang * dir, node = app.graph.get(ids[i]); if (node) { node.x = Math.cos(a) * R; node.y = Math.sin(a) * R; } } };
+        if (app._extInner) rot(app._extInner, app._extInR, 1);
+        if (app._extOuter) rot(app._extOuter, app._extOutR, -1);
       }
     },
     /* 7 -- pi / closure --------------------------------------------------- */
@@ -458,6 +525,12 @@
       body: `Classically a <b>circle is a primitive continuous object</b> — the set of points equidistant from a center. Its symmetry ` +
             `is a property it simply <em>has</em>. Shape is given; it does not emerge from informational invariance.`,
       readout: [{ k: 'Object', v: 'circle', sub: 'continuous, primitive' }, { k: 'Symmetry', v: 'O(2)', sub: 'a given property' }]
+    },
+    'Radius & Informational Extent': {
+      badge: 'Euclidean geometry', mode: 'classic-circle',
+      body: `Classically, <b>radius is just a length</b> — a number of metres from the centre, read off pre-existing space. ` +
+            `It has nothing to do with information or how much structure a region contains; the circle and its radius are simply given.`,
+      readout: [{ k: 'Radius', v: 'r', sub: 'a length in given space' }, { k: 'Symmetry', v: 'O(2)', sub: 'independent of r' }]
     },
     'π and Informational Closure': {
       badge: 'Euclidean geometry', mode: 'classic-circle',

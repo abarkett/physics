@@ -39,8 +39,9 @@ informational universe and watch the metrics emerge.
 | 2 | **Distinction** | Two nodes → `A ≠ B`. Information is born. `bits = 1`. |
 | 3 | **Adjacency → distance** | `A—B—C`. *Informational* distance = Σ(1/connectivity). |
 | 4 | **Time** | A simultaneous **fanout** with one **observer slice** riding it; the slice's count of ordered differences is the **clock**. |
-| 6 | **Adjacency before space** | Positions are re-derived live from the connectivity matrix. Drag a node. |
-| 7 | **Symmetry → shape** | A symmetric loop *projects* as a circle. |
+| 6 | **Adjacency before space** | A scrambled lattice **reconstructs 2-D space from connectivity alone** (press Scramble); colour = pure graph distance. |
+| 7 | **Symmetry → shape** | A symmetric ring **rotates** within that space — mapping onto itself, **0 new bits**, space unchanged. |
+| 8 | **Radius & extent** | Two rings, same rotational symmetry, different **reach** — radius is informational extent. |
 | 9 | **π & closure** | A closed loop's `n·sin(π/n)` visibly converges to π as you add states. |
 | 4·10 | **Projection / wavefunction** | A static sphere, viewed edge-on, slices to a **point→line→point** segment that fakes "time" (Flatland). |
 | 12 | **Entanglement** | Hidden adjacency drawn as a higher-dimensional **bridge**: short 1-hop throat however far you drag the mouths apart. |

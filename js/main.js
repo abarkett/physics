@@ -11,7 +11,7 @@
   const App = {
     graph: null, layout: null, renderer: null,
     stageIndex: 0, playing: true, sandbox: false, classicView: false,
-    _closureN: 6, _G: 60, _entPair: null,
+    _closureN: 6, _G: 60, _entPair: null, _extN: 14,
     _last: 0, _drag: null,
 
     init() {
@@ -132,6 +132,8 @@
         'closure-n': 'Tip: use ＋ / － to add or remove states in the loop.',
         measure: 'Tip: drag a ψ node — the bridge stays a 1-hop throat. Click ψ to measure.',
         'field-reset': 'Tip: press Reset to release the fanout again from scratch.',
+        scramble: 'Tip: press Scramble — the connections rebuild space from chaos.',
+        extent: 'Tip: use ＋ / － to change the outer ring’s informational extent.',
         collapse: 'Tip: add internal links / nodes until the core collapses into a black hole.'
       };
       this.el.hint.textContent = this.sandbox
@@ -158,6 +160,19 @@
         this._addButton(c, '－', () => { this._closureN = Math.max(3, this._closureN - 1); refresh(); });
         this._addLabel(c, 'n = ' + this._closureN, 'nLabel');
         this._addButton(c, '＋', () => { this._closureN = Math.min(64, this._closureN + 1); refresh(); });
+      }
+      if (s.interactive === 'scramble') {
+        this._addButton(c, '⤮ Scramble', () => this._scramble());
+      }
+      if (s.interactive === 'extent') {
+        const refresh = () => {
+          s.build(this);
+          const lab = document.getElementById('extLabel');
+          if (lab) lab.textContent = 'extent = ' + this._extN;
+        };
+        this._addButton(c, '－', () => { this._extN = Math.max(4, (this._extN || 14) - 2); refresh(); });
+        this._addLabel(c, 'extent = ' + (this._extN || 14), 'extLabel');
+        this._addButton(c, '＋', () => { this._extN = Math.min(40, (this._extN || 14) + 2); refresh(); });
       }
       if (s.interactive === 'field-reset') {
         this._addButton(c, '↺ Reset fanout', () => s.build(this));
@@ -194,6 +209,15 @@
       const shuffled = ids.slice().sort(() => Math.random() - 0.5);
       for (let i = 0; i < Math.min(6, shuffled.length); i++) this.graph.addEdge(node.id, shuffled[i], 1);
       if (this.renderer.field) this.renderer.field.build();
+    },
+
+    // Randomise lattice positions so the user can watch space re-form (Ch 6).
+    _scramble() {
+      const ids = this._lattice || this.graph.nodes.map(n => n.id);
+      for (const id of ids) {
+        const n = this.graph.get(id);
+        if (n) { n.x = (Math.random() - 0.5) * 560; n.y = (Math.random() - 0.5) * 560; n.vx = 0; n.vy = 0; }
+      }
     },
 
     _addButton(parent, label, fn) {
@@ -342,6 +366,12 @@
           case 'loops': add('Independent loops', g.loopCount, 'path multiplicity'); break;
           case 'components': add('Components', g.componentCount(), 'connected regions'); break;
           case 'symmetry': add('Rotational symmetry', 'C' + g.nodes.length, g.nodes.length + '-fold invariance'); break;
+          case 'dim': add('Emergent dimension', '≈ 2', 'reconstructed from adjacency'); break;
+          case 'rot-info': add('Info from rotation', '0 bits', 'structure maps onto itself'); break;
+          case 'distinct-configs': add('Distinct configurations', '1', 'all rotations equivalent'); break;
+          case 'sym-both': add('Symmetry type', 'rotational', 'identical for both rings'); break;
+          case 'extent-inner': add('Inner reach', (this._extInner ? this._extInner.length : 6) + ' states', 'small radius'); break;
+          case 'extent-outer': add('Outer reach', (this._extOuter ? this._extOuter.length : this._extN) + ' states', 'large radius'); break;
           case 'radius': add('Informational reach', g.nodes.length + ' states', 'encompassed by the loop'); break;
           case 'closure': {
             const n = g.nodes.length;
