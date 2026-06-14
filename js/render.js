@@ -216,8 +216,9 @@
         // Entangled pairs are drawn as a higher-dimensional bridge, not a line.
         if (e.tag === 'entangled') { this._entangledBridge(pa, pb, e); continue; }
         const grow = clamp((performance.now() - e.born) / 600, 0, 1);
+        const dimEdge = a.dim && b.dim;
         ctx.lineWidth = clamp(e.weight, 0.4, 3);
-        ctx.strokeStyle = `rgba(124,246,255,${0.18 * grow + 0.05})`;
+        ctx.strokeStyle = `rgba(124,246,255,${(dimEdge ? 0.06 : 0.18) * grow + (dimEdge ? 0.02 : 0.05)})`;
         ctx.beginPath();
         ctx.moveTo(pa.x, pa.y);
         ctx.lineTo(lerp(pa.x, pb.x, grow), lerp(pa.y, pb.y, grow));
@@ -249,13 +250,19 @@
         // In field modes, accumulated fanout amplitude IS the visible mass —
         // but kept restrained so the underlying paths/loops stay legible.
         const a = fieldMode ? (this.amp.get(n.id) || 0) : 0;
-        const r = (n.r + Math.min(deg, 8) * 1.1) * this.cam.zoom * eased * (1 + a * 0.45);
+        // Dim "space" backdrop nodes stay small; foreground nodes scale with degree/mass.
+        const r = n.dim
+          ? n.r * this.cam.zoom * eased
+          : (n.r + Math.min(deg, 8) * 1.1) * this.cam.zoom * eased * (1 + a * 0.45);
         let col = n.tint || PALETTE[n.group % PALETTE.length];
         if (n.tag === 'singularity') col = '#ffffff';
         if (n.state === 1) col = '#ffd27c';
 
+        ctx.save();
+        ctx.globalAlpha = n.dim ? 0.55 : 1;
+
         // Halo — modestly brighter where amplitude has pooled (density = mass).
-        const haloR = r * (3.4 + a * 1.6);
+        const haloR = r * (n.dim ? 2.2 : (3.4 + a * 1.6));
         const gl = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, haloR);
         gl.addColorStop(0, this._rgba(col, 0.5 + a * 0.3));
         gl.addColorStop(0.5, this._rgba(col, 0.12 + a * 0.12));
@@ -266,8 +273,10 @@
         // Core.
         ctx.fillStyle = col;
         ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = 'rgba(255,255,255,0.9)';
-        ctx.beginPath(); ctx.arc(p.x - r * 0.25, p.y - r * 0.25, r * 0.35, 0, Math.PI * 2); ctx.fill();
+        if (!n.dim) {
+          ctx.fillStyle = 'rgba(255,255,255,0.9)';
+          ctx.beginPath(); ctx.arc(p.x - r * 0.25, p.y - r * 0.25, r * 0.35, 0, Math.PI * 2); ctx.fill();
+        }
 
         // Label.
         if (n.label && this.cam.zoom > 0.5) {
@@ -276,6 +285,7 @@
           ctx.textAlign = 'center';
           ctx.fillText(n.label, p.x, p.y - r - 8);
         }
+        ctx.restore();
       }
     }
 

@@ -357,6 +357,8 @@
           case 'edges': add('Adjacencies', g.edges.length, 'relations'); break;
           case 'bits': add('Information', g.bits.toFixed(2), 'bits  (log₂ states)'); break;
           case 'distinction': add('Distinction', g.hasDistinction ? 'YES' : '—', g.hasDistinction ? 'information exists' : 'nothing to compare'); break;
+          case 'no-order': add('Ordering', 'none', 'A→B ≡ B→A — no time yet'); break;
+          case 'ordering': add('Ordering', 'A→B→C', 'middle ≠ ends ⇒ a line'); break;
           case 'dist': {
             const p = r.extra.distancePair;
             const d = p ? g.informationalDistance(p[0], p[1]) : null;
@@ -367,8 +369,9 @@
           case 'components': add('Components', g.componentCount(), 'connected regions'); break;
           case 'symmetry': add('Rotational symmetry', 'C' + g.nodes.length, g.nodes.length + '-fold invariance'); break;
           case 'dim': add('Emergent dimension', '≈ 2', 'reconstructed from adjacency'); break;
-          case 'rot-info': add('Info from rotation', '0 bits', 'structure maps onto itself'); break;
-          case 'distinct-configs': add('Distinct configurations', '1', 'all rotations equivalent'); break;
+          case 'rot-info': add('Info from rotation', '0 bits', 'ring maps onto itself'); break;
+          case 'ring-symmetry': add('Ring symmetry', 'C' + (this._symN || 8), 'rotational invariance'); break;
+          case 'space-state': add('Space (the grid)', 'unchanged', 'rotation adds nothing'); break;
           case 'sym-both': add('Symmetry type', 'rotational', 'identical for both rings'); break;
           case 'extent-inner': add('Inner reach', (this._extInner ? this._extInner.length : 6) + ' states', 'small radius'); break;
           case 'extent-outer': add('Outer reach', (this._extOuter ? this._extOuter.length : this._extN) + ' states', 'large radius'); break;

@@ -77,11 +77,12 @@
     /* 2 ------------------------------------------------------------------- */
     {
       chapter: '2', title: 'Universe Two', kicker: 'Distinction is Born',
-      body: `Two states: <b>A</b> and <b>B</b>. For the first time <b>A ≠ B</b>. ` +
-            `<em>Information now exists</em> — distinction is its smallest unit. Yet there is still no ordering, ` +
-            `so there is still no time. Difference without sequence.`,
+      body: `Two states, <b>A</b> and <b>B</b>, joined by one adjacency. For the first time <b>A ≠ B</b>, so information exists — ` +
+            `a single <b>bit</b>. Yet there is still no time. The link is <em>symmetric</em>: "A is next to B" is the very same fact ` +
+            `as "B is next to A" — swap the labels and nothing changes. So the step <b>A→B is indistinguishable from B→A</b>: there is ` +
+            `no first and second, no ordering, and therefore no time. <em>Distinction, but no direction.</em>`,
       mode: 'graph',
-      metrics: ['states', 'bits', 'distinction'],
+      metrics: ['states', 'bits', 'no-order'],
       build(app) {
         const g = app.graph; g.clear(); app.renderer.flow = false;
         const a = g.addNode({ label: 'A', x: -90, y: 0, group: 0, r: 11 });
@@ -92,12 +93,14 @@
     },
     /* 3 ------------------------------------------------------------------- */
     {
-      chapter: '3', title: 'Universe Three', kicker: 'Adjacency makes Distance',
-      body: `Three states: <b>A — B — C</b>. Adjacency now creates <em>distance</em> — not spatial, ` +
-            `but informational. A and C are "far" only because they are weakly connected (two hops, not one). ` +
-            `The first primitive geometry is born — from relationships, never from coordinates.`,
+      chapter: '3', title: 'Universe Three', kicker: 'Distance — and the Seed of Time',
+      body: `Three states, <b>A — B — C</b> — now ≈<b>1.58 bits</b> of distinction, plus a new structural fact. Two things appear at ` +
+            `once. First <em>distance</em>: A and C are "far" (two hops) only because they are weakly connected. Second, the symmetry ` +
+            `<b>breaks</b> — B is now distinguishable as the <em>middle</em> (two links) from the <em>ends</em> A and C (one link each). ` +
+            `That asymmetry is what finally lets us <b>order</b> them into a line, A→B→C: the seed of sequence, and so the seed of ` +
+            `<em>time</em> — which the next chapter turns into a clock.`,
       mode: 'graph',
-      metrics: ['states', 'bits', 'dist'],
+      metrics: ['states', 'bits', 'dist', 'ordering'],
       build(app) {
         const g = app.graph; g.clear(); app.renderer.flow = false;
         const a = g.addNode({ label: 'A', x: -150, y: 0, group: 0, r: 11 });
@@ -111,10 +114,11 @@
     /* 4 -- time (fanout vs. the observer's linear slice) ------------------- */
     {
       chapter: '4', title: 'Information Creates Time', kicker: 'Fanout vs. the Observer Slice',
-      body: `Underneath, the process is a <em>simultaneous fanout</em> — amplitude spreads along <b>every</b> adjacency at ` +
-            `once (the soft pulses). That fanout is static and timeless. The bright dot is one <em>observer slice</em>: a single ` +
-            `linear path sampled out of the fanout. <b>Time is not the fanout</b> — it is the observer's running count of ordered ` +
-            `differences along its slice (the <b>clock</b>). No new distinction ⇒ no tick.`,
+      body: `Take the ordering that first appeared in Universe Three and let the structure grow. Underneath, the process is a ` +
+            `<em>simultaneous fanout</em> — amplitude spreads along <b>every</b> adjacency at once (the soft pulses), and is itself ` +
+            `static and timeless. The bright dot is one <em>observer slice</em>: a single ordered path sampled out of the fanout. ` +
+            `<b>Time is not the fanout</b> — it is the observer's running count of ordered differences along its slice (the <b>clock</b>). ` +
+            `No new distinction ⇒ no tick.`,
       mode: 'fanout',
       metrics: ['states', 'clock', 'steps'],
       build(app) {
@@ -162,27 +166,37 @@
         app.renderer.setCamera(0, 0, 0.82);
       }
     },
-    /* 6 -- symmetry: rotation creates no new information ------------------ */
+    /* 6 -- symmetry: rotation adds no information ------------------------- */
     {
-      chapter: '7', title: 'Symmetry projects as Shape', kicker: 'Rotation creates no Information',
-      body: `Now place a <b>symmetric object</b> into that space — a ring — and watch it <b>rotate</b>. Because every state is ` +
-            `equivalent, rotation maps the structure exactly onto itself: the set of adjacencies never changes, so <b>0 new bits</b> ` +
-            `are created and the space (the dashed footprint) is <em>unchanged</em>. The amber marker only lets you <em>see</em> the ` +
-            `motion; the pure symmetric object would be undetectable. <em>That invariance is what we call "the circle's symmetry."</em>`,
+      chapter: '7', title: 'Symmetry projects as Shape', kicker: 'Rotation adds no Information',
+      body: `Here is the very same <b>space</b> from before — the faint grid. Drop a <b>symmetric ring</b> into it and let it ` +
+            `<b>rotate</b>. Every rotation carries the ring exactly onto itself, so the description of the whole system — grid plus ` +
+            `ring — is identical before and after: rotating it <b>adds 0 bits</b> of information, and the space is completely unchanged. ` +
+            `(The amber marker is extra information we painted on just to make the motion visible — it isn't part of the symmetric object.)`,
       mode: 'graph',
-      metrics: ['symmetry', 'rot-info', 'distinct-configs'],
+      metrics: ['ring-symmetry', 'rot-info', 'space-state'],
       build(app) {
-        const g = app.graph; g.clear(); app.renderer.flow = true;
-        const n = 8, R = 150, ids = [];
+        const g = app.graph; g.clear(); app.renderer.flow = false;
+        // The space from Chapter 6: a clean, pinned grid rendered as a faint backdrop.
+        const W = 6, H = 6, gap = 78, ox = -(W - 1) * gap / 2, oy = -(H - 1) * gap / 2, lat = [];
+        for (let i = 0; i < W; i++) for (let j = 0; j < H; j++)
+          lat.push(g.addNode({ x: ox + i * gap, y: oy + j * gap, pinned: true, dim: true, tint: '#3a4e76', r: 4 }).id);
+        const at = (i, j) => lat[i * H + j];
+        for (let i = 0; i < W; i++) for (let j = 0; j < H; j++) {
+          if (i < W - 1) g.addEdge(at(i, j), at(i + 1, j), 1);
+          if (j < H - 1) g.addEdge(at(i, j), at(i, j + 1), 1);
+        }
+        // A symmetric ring placed inside that space.
+        const n = 8, R = gap * 1.75, ids = [];
         for (let i = 0; i < n; i++) {
           const a = (i / n) * Math.PI * 2 - Math.PI / 2;
-          ids.push(g.addNode({ x: Math.cos(a) * R, y: Math.sin(a) * R, group: 1, pinned: true }).id);
+          ids.push(g.addNode({ x: Math.cos(a) * R, y: Math.sin(a) * R, group: 1, pinned: true, r: 8 }).id);
         }
-        for (let i = 0; i < n; i++) g.addEdge(ids[i], ids[(i + 1) % n], 1);
-        g.get(ids[0]).tint = '#ffd27c';                 // the visible marker
+        for (let i = 0; i < n; i++) g.addEdge(ids[i], ids[(i + 1) % n], 2.6);
+        g.get(ids[0]).tint = '#ffd27c';                 // the visible marker (extra info)
         app._symIds = ids; app._symN = n; app._symR = R;
-        app.renderer.extra.guides = [{ type: 'circle', x: 0, y: 0, r: R, label: 'space (connectivity) — unchanged' }];
-        app.renderer.setCamera(0, 0, 1.1);
+        app.renderer.extra.guides = [{ type: 'circle', x: 0, y: 0, r: R, label: 'the ring maps onto itself' }];
+        app.renderer.setCamera(0, 0, 1.0);
       },
       update(app) {
         const ids = app._symIds; if (!ids) return;
