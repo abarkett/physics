@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Information First — The Emergent Universe</title>
+  <meta name="description" content="An interactive simulation of a speculative framework in which information is fundamental and space, time, geometry, matter and gravity emerge from it." />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <canvas id="scene"></canvas>
+
+  <!-- Title / mode bar -->
+  <header id="topbar">
+    <div class="brand">
+      <span class="brand-mark">◍</span>
+      <span class="brand-text">INFORMATION&nbsp;FIRST</span>
+      <span class="brand-sub">the emergent universe</span>
+    </div>
+    <div class="top-actions">
+      <button id="sandboxBtn" class="ghost">✦ Sandbox</button>
+    </div>
+  </header>
+
+  <!-- Live metric HUD -->
+  <aside id="hud">
+    <div class="hud-title">EMERGENT READOUT</div>
+    <div id="metrics"></div>
+  </aside>
+
+  <div id="hint" class="hint"></div>
+
+  <!-- Narrative panel -->
+  <section id="panel">
+    <div class="panel-head">
+      <span id="chapter" class="chapter">Chapter 0</span>
+      <span id="progressNum" class="progress-num">1 / 15</span>
+    </div>
+    <div id="kicker" class="kicker">The Void</div>
+    <h1 id="title" class="title">Universe Zero</h1>
+    <p id="body" class="body"></p>
+
+    <div id="stageControls" class="stage-controls"></div>
+
+    <div class="panel-foot">
+      <button id="prev" class="nav">‹ Prev</button>
+      <div id="dots" class="dots"></div>
+      <button id="next" class="nav">Next ›</button>
+    </div>
+    <div class="play-row">
+      <button id="play" class="play">❚❚ Pause</button>
+      <span class="keyhint">← → navigate · space play/pause · S sandbox</span>
+    </div>
+  </section>
+
+  <script src="js/graph.js"></script>
+  <script src="js/render.js"></script>
+  <script src="js/stages.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
